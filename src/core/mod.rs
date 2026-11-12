@@ -2,7 +2,6 @@
 //! so everything in this module is unit-tested on any OS.
 
 pub mod engine;
-pub mod jokes;
 pub mod rng;
 pub mod schedule;
 pub mod settings;

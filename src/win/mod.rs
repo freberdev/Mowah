@@ -25,12 +25,13 @@ use windows_sys::Win32::UI::Controls::{
     CheckDlgButton, InitCommonControlsEx, IsDlgButtonChecked, BST_CHECKED, BST_UNCHECKED, ICC_STANDARD_CLASSES,
     INITCOMMONCONTROLSEX,
 };
+use windows_sys::Win32::UI::Input::KeyboardAndMouse::EnableWindow;
 use windows_sys::Win32::UI::Shell::{
     Shell_NotifyIconW, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreateDialogParamW, CreatePopupMenu, DefDlgProcW, DestroyMenu, DestroyWindow, DispatchMessageW,
-    GetCursorPos, GetDlgCtrlID, GetDlgItemInt, GetDlgItemTextW, GetMessageW, GetSystemMetrics, IsDialogMessageW,
+    GetCursorPos, GetDlgCtrlID, GetDlgItem, GetDlgItemInt, GetDlgItemTextW, GetMessageW, GetSystemMetrics, IsDialogMessageW,
     IsIconic, KillTimer, LoadCursorW, LoadImageW, MessageBoxW, PostMessageW, PostQuitMessage, RegisterClassExW,
     RegisterWindowMessageW, SendDlgItemMessageW, SetDlgItemInt, SetDlgItemTextW, SetForegroundWindow,
     SetMenuDefaultItem, SetTimer, ShowWindow, TrackPopupMenu, TranslateMessage, BN_CLICKED, CBN_SELCHANGE,
@@ -43,8 +44,6 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 };
 
 use crate::core::engine::{keep_awake, Engine, Outcome, Status, TickInput};
-use crate::core::jokes;
-use crate::core::rng::Rng;
 use crate::core::settings::{format_hhmm, parse_hhmm, Method, Settings};
 use crate::core::text;
 
@@ -78,9 +77,11 @@ const METHODS: [(Method, &str); 3] = [
 ];
 
 /// Swedish text for every fixed label. The layout itself is in res/mowah.rc.
-const LABELS: [(i32, &str); 18] = [
+const LABELS: [(i32, &str); 20] = [
     (IDC_GRP_ACTIVITY, "Aktivitet"),
     (IDC_LBL_METHOD, "Metod"),
+    (IDC_LBL_CIRCLE, "Cirkelns storlek"),
+    (IDC_LBL_CIRCLE_UNIT, "pixlar"),
     (IDC_LBL_IDLE, "Kör när inaktiv i"),
     (IDC_LBL_IDLE_UNIT, "sekunder"),
     (IDC_LBL_INTERVAL, "Upprepa var"),
@@ -105,7 +106,6 @@ const LABELS: [(i32, &str); 18] = [
 struct App {
     settings: Cell<Settings>,
     engine: RefCell<Engine>,
-    joke_rng: RefCell<Rng>,
     locked: Cell<bool>,
     status: Cell<Status>,
     /// Minute of day of the latest action and of the end of a timed pause.
@@ -127,7 +127,6 @@ thread_local! {
         App {
             settings: Cell::new(Settings::default()),
             engine: RefCell::new(Engine::new(seed)),
-            joke_rng: RefCell::new(Rng::new(seed.rotate_left(32))),
             locked: Cell::new(false),
             status: Cell::new(Status::UserActive),
             last_action: Cell::new(None),
@@ -288,7 +287,6 @@ unsafe fn on_init(window: HWND) {
     system::refresh_autostart_path();
     set_checked(window, IDC_AUTOSTART, system::autostart_enabled());
 
-    show_new_joke(window);
     show_tray_icon(window);
     WTSRegisterSessionNotification(window, NOTIFY_FOR_THIS_SESSION);
     SetTimer(window, TIMER_ID, TICK_MS, None);
@@ -324,7 +322,7 @@ unsafe fn on_command(window: HWND, id: i32, notification: u32) -> bool {
             BN_CLICKED,
         )
         | (
-            IDC_IDLE | IDC_INTERVAL_MIN | IDC_INTERVAL_MAX | IDC_SCHEDULE_FROM | IDC_SCHEDULE_TO,
+            IDC_CIRCLE | IDC_IDLE | IDC_INTERVAL_MIN | IDC_INTERVAL_MAX | IDC_SCHEDULE_FROM | IDC_SCHEDULE_TO,
             EN_KILLFOCUS,
         ) => apply_settings(window),
         _ => return false,
@@ -351,7 +349,7 @@ unsafe fn tick(window: HWND) {
 
     if outcome.act {
         // No borrow is held while the action runs; a visible movement takes a second.
-        let completed = input::perform(settings.method, settings.left_click);
+        let completed = input::perform(&settings);
         APP.with(|app| {
             let mut engine = app.engine.borrow_mut();
             if completed {
@@ -361,7 +359,6 @@ unsafe fn tick(window: HWND) {
                 engine.user_interrupted(system::now_ms());
             }
         });
-        show_new_joke(window);
     }
     show_status(window, &settings, outcome);
 }
@@ -411,11 +408,6 @@ unsafe fn pause_for_an_hour(window: HWND) {
     tick(window);
 }
 
-unsafe fn show_new_joke(window: HWND) {
-    let joke = APP.with(|app| jokes::pick(&mut app.joke_rng.borrow_mut()));
-    set_text(window, IDC_JOKE, joke);
-}
-
 // ---------------------------------------------------------------------------
 // Showing, hiding and closing the window
 
@@ -463,6 +455,7 @@ unsafe fn read_settings(window: HWND, previous: Settings) -> Settings {
     let time = |id: i32, fallback: u16| parse_hhmm(&get_text(window, id)).unwrap_or(fallback);
     Settings {
         method: method.map_or(previous.method, |(method, _)| *method),
+        circle_diameter_px: get_number(window, IDC_CIRCLE).unwrap_or(previous.circle_diameter_px),
         idle_threshold_secs: get_number(window, IDC_IDLE).unwrap_or(previous.idle_threshold_secs),
         interval_min_secs: get_number(window, IDC_INTERVAL_MIN).unwrap_or(previous.interval_min_secs),
         interval_max_secs: get_number(window, IDC_INTERVAL_MAX).unwrap_or(previous.interval_max_secs),
@@ -481,6 +474,12 @@ unsafe fn read_settings(window: HWND, previous: Settings) -> Settings {
 unsafe fn show_settings(window: HWND, settings: &Settings) {
     let index = METHODS.iter().position(|(method, _)| *method == settings.method).unwrap_or(0);
     SendDlgItemMessageW(window, IDC_METHOD, CB_SETCURSEL, index, 0);
+    set_number(window, IDC_CIRCLE, settings.circle_diameter_px);
+    // The circle size only means something for the visible movement.
+    let draws_circle = i32::from(settings.method == Method::VisibleMove);
+    for id in [IDC_LBL_CIRCLE, IDC_CIRCLE, IDC_LBL_CIRCLE_UNIT] {
+        EnableWindow(GetDlgItem(window, id), draws_circle);
+    }
     set_number(window, IDC_IDLE, settings.idle_threshold_secs);
     set_number(window, IDC_INTERVAL_MIN, settings.interval_min_secs);
     set_number(window, IDC_INTERVAL_MAX, settings.interval_max_secs);

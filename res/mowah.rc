@@ -25,6 +25,9 @@
 #define IDC_INTERVAL_MAX    1019
 #define IDC_LBL_INT_UNIT    1020
 #define IDC_CLICK           1021
+#define IDC_LBL_CIRCLE      1022
+#define IDC_CIRCLE          1023
+#define IDC_LBL_CIRCLE_UNIT 1024
 #define IDC_GRP_AWAKE       1030
 #define IDC_PREVENT_SLEEP   1031
 #define IDC_KEEP_DISPLAY    1032
@@ -37,7 +40,6 @@
 #define IDC_AUTOSTART       1051
 #define IDC_START_MINIMIZED 1052
 #define IDC_CLOSE_TO_TRAY   1053
-#define IDC_JOKE            1060
 
 IDI_APP     ICON "mowah.ico"
 IDI_PAUSED  ICON "mowah-paused.ico"
@@ -71,7 +73,7 @@ BEGIN
     END
 END
 
-IDD_MAIN DIALOGEX 0, 0, 262, 288
+IDD_MAIN DIALOGEX 0, 0, 262, 271
 STYLE DS_SETFONT | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mowah"
 CLASS "MowahMainWindow"
@@ -81,33 +83,34 @@ BEGIN
     LTEXT           "", IDC_LAST_ACTION, 10, 20, 182, 9, SS_NOPREFIX
     PUSHBUTTON      "Pause", IDC_PAUSE, 196, 9, 58, 16
 
-    GROUPBOX        "Activity", IDC_GRP_ACTIVITY, 7, 34, 248, 80
+    GROUPBOX        "Activity", IDC_GRP_ACTIVITY, 7, 34, 248, 96
     LTEXT           "Method", IDC_LBL_METHOD, 15, 49, 72, 9
     COMBOBOX        IDC_METHOD, 90, 47, 156, 70, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Run when idle for", IDC_LBL_IDLE, 15, 66, 72, 9
-    EDITTEXT        IDC_IDLE, 90, 64, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT           "seconds", IDC_LBL_IDLE_UNIT, 126, 66, 60, 9
-    LTEXT           "Repeat every", IDC_LBL_INTERVAL, 15, 82, 72, 9
-    EDITTEXT        IDC_INTERVAL_MIN, 90, 80, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    CTEXT           "-", IDC_LBL_DASH, 123, 82, 10, 9
-    EDITTEXT        IDC_INTERVAL_MAX, 134, 80, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT           "seconds", IDC_LBL_INT_UNIT, 170, 82, 60, 9
-    AUTOCHECKBOX    "Left click too", IDC_CLICK, 15, 98, 232, 10
+    LTEXT           "Circle size", IDC_LBL_CIRCLE, 15, 66, 72, 9
+    EDITTEXT        IDC_CIRCLE, 90, 64, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT           "pixels", IDC_LBL_CIRCLE_UNIT, 126, 66, 60, 9
+    LTEXT           "Run when idle for", IDC_LBL_IDLE, 15, 82, 72, 9
+    EDITTEXT        IDC_IDLE, 90, 80, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT           "seconds", IDC_LBL_IDLE_UNIT, 126, 82, 60, 9
+    LTEXT           "Repeat every", IDC_LBL_INTERVAL, 15, 98, 72, 9
+    EDITTEXT        IDC_INTERVAL_MIN, 90, 96, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    CTEXT           "-", IDC_LBL_DASH, 123, 98, 10, 9
+    EDITTEXT        IDC_INTERVAL_MAX, 134, 96, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT           "seconds", IDC_LBL_INT_UNIT, 170, 98, 60, 9
+    AUTOCHECKBOX    "Left click too", IDC_CLICK, 15, 114, 232, 10
 
-    GROUPBOX        "Keep awake", IDC_GRP_AWAKE, 7, 118, 248, 40
-    AUTOCHECKBOX    "Prevent sleep", IDC_PREVENT_SLEEP, 15, 130, 232, 10
-    AUTOCHECKBOX    "Keep display on", IDC_KEEP_DISPLAY, 15, 143, 232, 10
+    GROUPBOX        "Keep awake", IDC_GRP_AWAKE, 7, 134, 248, 40
+    AUTOCHECKBOX    "Prevent sleep", IDC_PREVENT_SLEEP, 15, 146, 232, 10
+    AUTOCHECKBOX    "Keep display on", IDC_KEEP_DISPLAY, 15, 159, 232, 10
 
-    GROUPBOX        "Schedule", IDC_GRP_SCHEDULE, 7, 162, 248, 28
-    AUTOCHECKBOX    "Only Mon-Fri between", IDC_SCHEDULE, 15, 174, 96, 10
-    EDITTEXT        IDC_SCHEDULE_FROM, 114, 173, 30, 12, ES_AUTOHSCROLL
-    CTEXT           "and", IDC_LBL_AND, 146, 175, 20, 9
-    EDITTEXT        IDC_SCHEDULE_TO, 168, 173, 30, 12, ES_AUTOHSCROLL
+    GROUPBOX        "Schedule", IDC_GRP_SCHEDULE, 7, 178, 248, 28
+    AUTOCHECKBOX    "Only Mon-Fri between", IDC_SCHEDULE, 15, 190, 96, 10
+    EDITTEXT        IDC_SCHEDULE_FROM, 114, 189, 30, 12, ES_AUTOHSCROLL
+    CTEXT           "and", IDC_LBL_AND, 146, 191, 20, 9
+    EDITTEXT        IDC_SCHEDULE_TO, 168, 189, 30, 12, ES_AUTOHSCROLL
 
-    GROUPBOX        "Program", IDC_GRP_PROGRAM, 7, 194, 248, 54
-    AUTOCHECKBOX    "Start with Windows", IDC_AUTOSTART, 15, 206, 232, 10
-    AUTOCHECKBOX    "Start minimized", IDC_START_MINIMIZED, 15, 219, 232, 10
-    AUTOCHECKBOX    "Close to tray", IDC_CLOSE_TO_TRAY, 15, 232, 232, 10
-
-    LTEXT           "", IDC_JOKE, 10, 254, 244, 28, SS_NOPREFIX
+    GROUPBOX        "Program", IDC_GRP_PROGRAM, 7, 210, 248, 54
+    AUTOCHECKBOX    "Start with Windows", IDC_AUTOSTART, 15, 222, 232, 10
+    AUTOCHECKBOX    "Start minimized", IDC_START_MINIMIZED, 15, 235, 232, 10
+    AUTOCHECKBOX    "Close to tray", IDC_CLOSE_TO_TRAY, 15, 248, 232, 10
 END

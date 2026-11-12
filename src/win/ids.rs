@@ -19,6 +19,9 @@ pub const IDC_LBL_DASH: i32 = 1018;
 pub const IDC_INTERVAL_MAX: i32 = 1019;
 pub const IDC_LBL_INT_UNIT: i32 = 1020;
 pub const IDC_CLICK: i32 = 1021;
+pub const IDC_LBL_CIRCLE: i32 = 1022;
+pub const IDC_CIRCLE: i32 = 1023;
+pub const IDC_LBL_CIRCLE_UNIT: i32 = 1024;
 pub const IDC_GRP_AWAKE: i32 = 1030;
 pub const IDC_PREVENT_SLEEP: i32 = 1031;
 pub const IDC_KEEP_DISPLAY: i32 = 1032;
@@ -31,7 +34,6 @@ pub const IDC_GRP_PROGRAM: i32 = 1050;
 pub const IDC_AUTOSTART: i32 = 1051;
 pub const IDC_START_MINIMIZED: i32 = 1052;
 pub const IDC_CLOSE_TO_TRAY: i32 = 1053;
-pub const IDC_JOKE: i32 = 1060;
 
 /// Tray menu commands.
 pub const IDM_OPEN: usize = 2001;

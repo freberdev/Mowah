@@ -16,7 +16,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     SM_XVIRTUALSCREEN,
 };
 
-use crate::core::settings::Method;
+use crate::core::settings::{circle_steps, Method, Settings};
 
 /// The current time on Windows' tick clock, and how many milliseconds ago Windows
 /// last saw mouse or keyboard input of any origin.
@@ -33,11 +33,11 @@ pub fn clock_and_idle_ms() -> (u64, u64) {
 
 /// Performs one round of activity. Only called when the user has been away.
 /// Returns false if the user took over the mouse before it was finished.
-pub fn perform(method: Method, left_click: bool) -> bool {
-    match method {
+pub fn perform(settings: &Settings) -> bool {
+    match settings.method {
         Method::Nudge => nudge(),
         Method::VisibleMove => {
-            if !visible_loop() {
+            if !visible_loop(settings.circle_diameter_px) {
                 // The user grabbed the mouse mid-loop. They are back, so stop here.
                 return false;
             }
@@ -47,7 +47,7 @@ pub fn perform(method: Method, left_click: bool) -> bool {
         }
         Method::KeyF15 => send(&[key(VK_F15, 0), key(VK_F15, KEYEVENTF_KEYUP)]),
     }
-    if left_click && !pointer_is_over_own_window() {
+    if settings.left_click && !pointer_is_over_own_window() {
         send(&[mouse(MOUSEEVENTF_LEFTDOWN, 0, 0), mouse(MOUSEEVENTF_LEFTUP, 0, 0)]);
     }
     true
@@ -61,19 +61,18 @@ fn nudge() {
     send(&[mouse(MOUSEEVENTF_MOVE, first, 0), mouse(MOUSEEVENTF_MOVE, -first, 0)]);
 }
 
-/// Draws a circle with the pointer, about a second long and big enough to notice,
-/// and ends where it started. Returns false, leaving the pointer alone, as soon as
-/// something else moves it, so it never fights a returning user.
-fn visible_loop() -> bool {
-    const STEPS: i32 = 48;
-    /// Radius at 100 % display scaling. Mowah works in physical pixels, so on a
-    /// high-resolution screen the same number would be a much smaller circle.
-    const RADIUS_AT_96_DPI: f64 = 40.0;
-
-    let radius = RADIUS_AT_96_DPI * f64::from(unsafe { GetDpiForSystem() }) / 96.0;
+/// Draws a circle with the pointer, taking a second or two, and ends where it
+/// started. Returns false, leaving the pointer alone, as soon as something else
+/// moves it, so it never fights a returning user.
+///
+/// `diameter_px` is the size at 100 % display scaling. Mowah works in physical
+/// pixels, so it is scaled up to look the same on a high-resolution screen.
+fn visible_loop(diameter_px: u32) -> bool {
+    let steps = circle_steps(diameter_px);
+    let radius = f64::from(diameter_px) / 2.0 * f64::from(unsafe { GetDpiForSystem() }) / 96.0;
     let Some(origin) = cursor_pos() else { return false };
-    for step in 1..=STEPS {
-        let angle = TAU * f64::from(step) / f64::from(STEPS);
+    for step in 1..=steps {
+        let angle = TAU * f64::from(step) / f64::from(steps);
         let target = POINT {
             x: origin.x + (radius * (1.0 - angle.cos())).round() as i32,
             y: origin.y + (radius * angle.sin()).round() as i32,

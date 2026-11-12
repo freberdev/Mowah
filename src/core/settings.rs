@@ -3,6 +3,11 @@
 pub const MIN_SECS: u32 = 5;
 pub const MAX_SECS: u32 = 240;
 
+/// Smallest and largest circle the visible pointer movement may draw, in pixels
+/// at 100 % display scaling.
+pub const MIN_CIRCLE_PX: u32 = 20;
+pub const MAX_CIRCLE_PX: u32 = 1000;
+
 const MINUTES_PER_DAY: u16 = 24 * 60;
 const DEFAULT_SCHEDULE_START: u16 = 8 * 60;
 const DEFAULT_SCHEDULE_END: u16 = 17 * 60;
@@ -20,6 +25,8 @@ pub enum Method {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Settings {
     pub method: Method,
+    /// Diameter of the circle drawn by `Method::VisibleMove`.
+    pub circle_diameter_px: u32,
     pub idle_threshold_secs: u32,
     pub interval_min_secs: u32,
     pub interval_max_secs: u32,
@@ -38,6 +45,7 @@ impl Default for Settings {
     fn default() -> Self {
         Settings {
             method: Method::Nudge,
+            circle_diameter_px: 300,
             idle_threshold_secs: 60,
             interval_min_secs: 30,
             interval_max_secs: 90,
@@ -59,6 +67,7 @@ impl Settings {
         let interval_min_secs = self.interval_min_secs.clamp(MIN_SECS, MAX_SECS);
         let valid_time = |minute: u16, fallback: u16| if minute < MINUTES_PER_DAY { minute } else { fallback };
         Settings {
+            circle_diameter_px: self.circle_diameter_px.clamp(MIN_CIRCLE_PX, MAX_CIRCLE_PX),
             idle_threshold_secs: self.idle_threshold_secs.clamp(MIN_SECS, MAX_SECS),
             interval_min_secs,
             interval_max_secs: self.interval_max_secs.clamp(interval_min_secs, MAX_SECS),
@@ -76,6 +85,7 @@ impl Settings {
         };
         format!(
             "method={method}\r\n\
+             circle_diameter_px={}\r\n\
              idle_threshold_secs={}\r\n\
              interval_min_secs={}\r\n\
              interval_max_secs={}\r\n\
@@ -87,6 +97,7 @@ impl Settings {
              schedule_end={}\r\n\
              start_minimized={}\r\n\
              close_to_tray={}\r\n",
+            self.circle_diameter_px,
             self.idle_threshold_secs,
             self.interval_min_secs,
             self.interval_max_secs,
@@ -109,6 +120,7 @@ impl Settings {
             let value = value.trim();
             match key.trim() {
                 "method" => set(&mut s.method, parse_method(value)),
+                "circle_diameter_px" => set(&mut s.circle_diameter_px, value.parse().ok()),
                 "idle_threshold_secs" => set(&mut s.idle_threshold_secs, value.parse().ok()),
                 "interval_min_secs" => set(&mut s.interval_min_secs, value.parse().ok()),
                 "interval_max_secs" => set(&mut s.interval_max_secs, value.parse().ok()),
@@ -125,6 +137,14 @@ impl Settings {
         }
         s.normalized()
     }
+}
+
+/// How many pointer positions a circle of this size is drawn with: enough to look
+/// round, few enough that even the largest circle is over in a couple of seconds.
+pub fn circle_steps(diameter_px: u32) -> u32 {
+    const PIXELS_PER_STEP: f64 = 15.0;
+    let circumference = std::f64::consts::PI * f64::from(diameter_px);
+    ((circumference / PIXELS_PER_STEP).round() as u32).clamp(24, 96)
 }
 
 /// Parses "8:05", "08:05" or "08.05" into minutes since midnight.
@@ -166,6 +186,7 @@ mod tests {
     fn defaults_are_unobtrusive() {
         let s = Settings::default();
         assert_eq!(s.method, Method::Nudge);
+        assert_eq!(s.circle_diameter_px, 300);
         assert!(!s.left_click);
         assert_eq!(s.idle_threshold_secs, 60);
         assert_eq!((s.interval_min_secs, s.interval_max_secs), (30, 90));
@@ -186,6 +207,7 @@ mod tests {
     fn ini_round_trip_preserves_every_field() {
         let s = Settings {
             method: Method::KeyF15,
+            circle_diameter_px: 120,
             idle_threshold_secs: 45,
             interval_min_secs: 20,
             interval_max_secs: 200,
@@ -233,6 +255,32 @@ mod tests {
         assert_eq!(s.idle_threshold_secs, MIN_SECS);
         assert_eq!(s.interval_min_secs, MAX_SECS);
         assert_eq!(s.interval_max_secs, MAX_SECS);
+    }
+
+    #[test]
+    fn circle_size_is_clamped_when_loading() {
+        assert_eq!(Settings::from_ini("circle_diameter_px=5\n").circle_diameter_px, MIN_CIRCLE_PX);
+        assert_eq!(Settings::from_ini("circle_diameter_px=99999\n").circle_diameter_px, MAX_CIRCLE_PX);
+        assert_eq!(Settings::from_ini("circle_diameter_px=450\n").circle_diameter_px, 450);
+    }
+
+    #[test]
+    fn settings_file_from_before_circle_size_existed_gets_the_default() {
+        let s = Settings::from_ini("method=visible_move\nidle_threshold_secs=5\n");
+        assert_eq!(s.method, Method::VisibleMove);
+        assert_eq!(s.circle_diameter_px, 300);
+    }
+
+    #[test]
+    fn a_300_pixel_circle_moves_about_fifteen_pixels_per_step() {
+        assert_eq!(circle_steps(300), 63);
+    }
+
+    #[test]
+    fn step_count_grows_with_the_circle_but_stays_within_limits() {
+        assert_eq!(circle_steps(MIN_CIRCLE_PX), 24);
+        assert_eq!(circle_steps(MAX_CIRCLE_PX), 96);
+        assert!(circle_steps(200) < circle_steps(400));
     }
 
     #[test]
