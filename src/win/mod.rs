@@ -36,7 +36,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     SetMenuDefaultItem, SetTimer, ShowWindow, TrackPopupMenu, TranslateMessage, BN_CLICKED, CBN_SELCHANGE,
     CB_ADDSTRING, CB_GETCURSEL, CB_SETCURSEL, DLGWINDOWEXTRA, EN_KILLFOCUS, HICON, IDCANCEL, IDC_ARROW, IDOK,
     IMAGE_ICON, LR_DEFAULTCOLOR, MB_ICONERROR, MF_SEPARATOR, MF_STRING, MSG, SC_MINIMIZE, SM_CXICON,
-    SM_CXSMICON, SM_CYICON, SM_CYSMICON, SW_HIDE, SW_RESTORE, SW_SHOW, TPM_NONOTIFY, TPM_RETURNCMD,
+    SM_CXSMICON, SM_CYICON, SM_CYSMICON, SW_HIDE, SW_RESTORE, SW_SHOW, TPM_BOTTOMALIGN, TPM_NONOTIFY, TPM_RETURNCMD,
     TPM_RIGHTBUTTON, WM_APP, WM_CLOSE, WM_COMMAND, WM_CONTEXTMENU, WM_CTLCOLORSTATIC, WM_DESTROY, WM_INITDIALOG,
     WM_LBUTTONDBLCLK, WM_LBUTTONUP, WM_NULL, WM_RBUTTONUP, WM_SYSCOMMAND, WM_TIMER, WM_WTSSESSION_CHANGE,
     WNDCLASSEXW, WTS_SESSION_LOCK, WTS_SESSION_UNLOCK,
@@ -573,7 +573,8 @@ unsafe fn show_tray_menu(window: HWND) {
     GetCursorPos(&mut cursor);
     // Without foreground status the menu would not close when clicking elsewhere.
     SetForegroundWindow(window);
-    let flags = TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY;
+    // Bottom-aligned so the menu opens upwards from the tray instead of over the taskbar.
+    let flags = TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY | TPM_BOTTOMALIGN;
     let choice = TrackPopupMenu(menu, flags, cursor.x, cursor.y, 0, window, null());
     PostMessageW(window, WM_NULL, 0, 0);
     DestroyMenu(menu);
