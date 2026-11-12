@@ -2,10 +2,10 @@ use super::rng::Rng;
 use super::schedule::{is_within_schedule, LocalTime};
 use super::settings::Settings;
 
-/// Input that arrives within this long after one of Mowah's own actions is taken
-/// to be that action, not the user. The slowest action, the visible pointer loop,
-/// takes about half a second. Erring short is the safe side: if Mowah mistakes its
-/// own input for the user it merely waits one idle threshold before acting again.
+/// Input that arrives while one of Mowah's own actions is running, or within this
+/// long after it finished, is taken to be that action and not the user. Erring
+/// short is the safe side: if Mowah mistakes its own input for the user it merely
+/// waits one idle threshold before acting again.
 pub const OWN_INPUT_WINDOW_MS: u64 = 1_000;
 
 /// Everything the engine needs to know about the outside world for one tick.
@@ -80,8 +80,8 @@ pub struct Engine {
     last_input_seen_ms: Option<u64>,
     /// When the real user last touched mouse or keyboard.
     user_last_active_ms: u64,
-    /// When Mowah last asked for an action; input right after this is its own.
-    own_action_ms: Option<u64>,
+    /// Start and end of Mowah's latest action; input around this span is its own.
+    own_action_ms: Option<(u64, u64)>,
     next_action_ms: Option<u64>,
 }
 
@@ -128,7 +128,7 @@ impl Engine {
             let wait_secs = self
                 .rng
                 .range_inclusive(settings.interval_min_secs.into(), settings.interval_max_secs.into());
-            self.own_action_ms = Some(now);
+            self.own_action_ms = Some((now, now));
             self.next_action_ms = Some(now + wait_secs * 1_000);
         }
         Outcome { status, act, user_idle_ms }
@@ -142,10 +142,26 @@ impl Engine {
         self.last_input_seen_ms = Some(input_ms);
         let is_own = self
             .own_action_ms
-            .is_some_and(|acted| input_ms >= acted && input_ms - acted <= OWN_INPUT_WINDOW_MS);
+            .is_some_and(|(start, end)| input_ms >= start && input_ms <= end + OWN_INPUT_WINDOW_MS);
         if !is_own {
             self.user_last_active_ms = input_ms;
         }
+    }
+
+    /// Tells the engine that the action it asked for has now been carried out. A
+    /// visible pointer movement takes a while, and input up to this moment is Mowah's.
+    pub fn action_finished(&mut self, now_ms: u64) {
+        if let Some((start, _)) = self.own_action_ms {
+            self.own_action_ms = Some((start, now_ms.max(start)));
+        }
+    }
+
+    /// Tells the engine that the user took over the mouse while an action was running.
+    pub fn user_interrupted(&mut self, now_ms: u64) {
+        self.own_action_ms = None;
+        self.user_last_active_ms = now_ms;
+        // Whatever input Windows recorded up to now has been dealt with here.
+        self.last_input_seen_ms = Some(self.last_input_seen_ms.map_or(now_ms, |seen| seen.max(now_ms)));
     }
 
     pub fn pause(&mut self) {
@@ -339,6 +355,46 @@ mod tests {
         sim.now_ms += 1_500;
         sim.user_input();
         assert_eq!(sim.tick().status, Status::UserActive);
+    }
+
+    #[test]
+    fn input_at_the_end_of_a_slow_action_is_still_its_own() {
+        let mut sim = Sim::new(fixed_interval(200));
+        sim.run_secs(60);
+        let acted_at = sim.now_ms;
+        // A visible pointer movement that takes 1.4 s and ends with the real input.
+        sim.now_ms = acted_at + 1_400;
+        sim.last_input_ms = sim.now_ms;
+        sim.engine.action_finished(sim.now_ms);
+
+        let outcome = sim.run_secs(2);
+        assert_eq!(outcome.status, Status::KeepingAlive);
+        assert_eq!(outcome.user_idle_ms, 63_400);
+    }
+
+    #[test]
+    fn input_well_after_a_slow_action_finished_is_the_user() {
+        let mut sim = Sim::new(fixed_interval(200));
+        sim.run_secs(60);
+        let acted_at = sim.now_ms;
+        sim.engine.action_finished(acted_at + 1_400);
+        sim.now_ms = acted_at + 1_400 + OWN_INPUT_WINDOW_MS + 500;
+        sim.user_input();
+        assert_eq!(sim.tick().status, Status::UserActive);
+    }
+
+    #[test]
+    fn grabbing_the_mouse_during_an_action_counts_as_the_user_returning() {
+        let mut sim = Sim::new(fixed_interval(200));
+        sim.run_secs(60);
+        let acted_at = sim.now_ms;
+        // The user moves the mouse 200 ms into the action, which then stops.
+        sim.last_input_ms = acted_at + 200;
+        sim.engine.user_interrupted(acted_at + 300);
+
+        let outcome = sim.run_secs(1);
+        assert_eq!(outcome.status, Status::UserActive);
+        assert!(outcome.user_idle_ms <= 1_000, "idle was {} ms", outcome.user_idle_ms);
     }
 
     #[test]

@@ -10,7 +10,7 @@ Mowah gör ingenting så länge du själv rör mus eller tangentbord. Först nä
 
 | Inställning | Vad den gör |
 |---|---|
-| Metod | **Osynlig musknuff** flyttar pekaren en pixel och tillbaka. **Synlig musrörelse** ritar en liten cirkel. **Tangenten F15** trycker på en tangent som inga vanliga tangentbord har. |
+| Metod | **Osynlig musknuff** flyttar pekaren en pixel och tillbaka. **Synlig musrörelse** ritar en cirkel med pekaren i ungefär en sekund och avbryts om du tar musen. **Tangenten F15** trycker på en tangent som inga vanliga tangentbord har. |
 | Kör när inaktiv i | Hur länge du ska ha varit borta innan Mowah börjar (5–240 sekunder). |
 | Upprepa var | Kortaste och längsta tid mellan åtgärderna (5–240 sekunder). Tiden slumpas inom intervallet. |
 | Vänsterklicka också | Klickar där pekaren står efter varje åtgärd. Avstängt från start, eftersom ett klick kan träffa något du inte tänkt. |

@@ -6,6 +6,7 @@ use std::mem::size_of;
 use windows_sys::Win32::Foundation::POINT;
 use windows_sys::Win32::System::SystemInformation::GetTickCount64;
 use windows_sys::Win32::System::Threading::{GetCurrentProcessId, Sleep};
+use windows_sys::Win32::UI::HiDpi::GetDpiForSystem;
 use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
     GetLastInputInfo, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBDINPUT, KEYEVENTF_KEYUP,
     LASTINPUTINFO, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MOVE, MOUSEINPUT, VK_F15,
@@ -31,13 +32,14 @@ pub fn clock_and_idle_ms() -> (u64, u64) {
 }
 
 /// Performs one round of activity. Only called when the user has been away.
-pub fn perform(method: Method, left_click: bool) {
+/// Returns false if the user took over the mouse before it was finished.
+pub fn perform(method: Method, left_click: bool) -> bool {
     match method {
         Method::Nudge => nudge(),
         Method::VisibleMove => {
             if !visible_loop() {
                 // The user grabbed the mouse mid-loop. They are back, so stop here.
-                return;
+                return false;
             }
             // Moving the pointer with SetCursorPos is visible but does not count as
             // input, so the nudge afterwards is what actually resets the idle clock.
@@ -48,6 +50,7 @@ pub fn perform(method: Method, left_click: bool) {
     if left_click && !pointer_is_over_own_window() {
         send(&[mouse(MOUSEEVENTF_LEFTDOWN, 0, 0), mouse(MOUSEEVENTF_LEFTUP, 0, 0)]);
     }
+    true
 }
 
 /// One pixel sideways and back again.
@@ -58,25 +61,28 @@ fn nudge() {
     send(&[mouse(MOUSEEVENTF_MOVE, first, 0), mouse(MOUSEEVENTF_MOVE, -first, 0)]);
 }
 
-/// Draws a small circle with the pointer and ends where it started. Returns false,
-/// leaving the pointer alone, as soon as something else moves it, so it never
-/// fights a returning user.
+/// Draws a circle with the pointer, about a second long and big enough to notice,
+/// and ends where it started. Returns false, leaving the pointer alone, as soon as
+/// something else moves it, so it never fights a returning user.
 fn visible_loop() -> bool {
-    const STEPS: i32 = 28;
-    const RADIUS: f64 = 14.0;
+    const STEPS: i32 = 48;
+    /// Radius at 100 % display scaling. Mowah works in physical pixels, so on a
+    /// high-resolution screen the same number would be a much smaller circle.
+    const RADIUS_AT_96_DPI: f64 = 40.0;
 
+    let radius = RADIUS_AT_96_DPI * f64::from(unsafe { GetDpiForSystem() }) / 96.0;
     let Some(origin) = cursor_pos() else { return false };
     for step in 1..=STEPS {
         let angle = TAU * f64::from(step) / f64::from(STEPS);
         let target = POINT {
-            x: origin.x + (RADIUS * (1.0 - angle.cos())).round() as i32,
-            y: origin.y + (RADIUS * angle.sin()).round() as i32,
+            x: origin.x + (radius * (1.0 - angle.cos())).round() as i32,
+            y: origin.y + (radius * angle.sin()).round() as i32,
         };
         unsafe { SetCursorPos(target.x, target.y) };
         // Read back at once: at a screen edge Windows puts the pointer somewhere
         // other than where it was sent, and that must not be mistaken for the user.
         let placed = cursor_pos().unwrap_or(target);
-        unsafe { Sleep(12) };
+        unsafe { Sleep(16) };
         match cursor_pos() {
             Some(actual) if actual.x == placed.x && actual.y == placed.y => {}
             _ => return false,

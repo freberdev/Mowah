@@ -350,8 +350,17 @@ unsafe fn tick(window: HWND) {
     });
 
     if outcome.act {
-        input::perform(settings.method, settings.left_click);
-        APP.with(|app| app.last_action.set(Some(system::local_time().minute_of_day)));
+        // No borrow is held while the action runs; a visible movement takes a second.
+        let completed = input::perform(settings.method, settings.left_click);
+        APP.with(|app| {
+            let mut engine = app.engine.borrow_mut();
+            if completed {
+                engine.action_finished(system::now_ms());
+                app.last_action.set(Some(system::local_time().minute_of_day));
+            } else {
+                engine.user_interrupted(system::now_ms());
+            }
+        });
         show_new_joke(window);
     }
     show_status(window, &settings, outcome);
