@@ -61,6 +61,24 @@ cargo test
 
 Ikonerna ritas av `tools/make_icons.py` (kräver Pillow) och sparas i `res/`.
 
+## Släppa en ny version
+
+GitHub bygger `Mowah.exe` och lägger upp den som en Release när en versionstagg pushas. Vanliga pushar till `main` bygger ingenting.
+
+1. Ändra versionsnumret i `Cargo.toml` (`version = "1.0.1"`) och på de fyra ställena i `res/mowah.rc` (`FILEVERSION`, `PRODUCTVERSION` och de två `VALUE`-raderna). Kör `cargo build` en gång så att `Cargo.lock` följer med.
+2. Committa och pusha till `main`.
+3. Tagga och pusha taggen:
+
+```bash
+git tag v1.0.1
+```
+
+```bash
+git push origin v1.0.1
+```
+
+Taggen måste vara versionen i `Cargo.toml` med ett `v` framför, annars avbryts bygget. Arbetsflödet finns i `.github/workflows/release.yml`. Det kör testerna, bygger med samma `build.sh` som ovan och bifogar filen till releasen.
+
 ## Var saker sparas
 
 - Inställningar: `%APPDATA%\Mowah\settings.ini`
