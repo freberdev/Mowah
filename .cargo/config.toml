@@ -1,0 +1,4 @@
+# When building on Windows with Microsoft's toolchain, link the C runtime into
+# the .exe so it runs on machines without the Visual C++ redistributable.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

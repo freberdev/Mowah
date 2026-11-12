@@ -1,0 +1,22 @@
+# Rust build output
+/target/
+
+# The finished program. Built by ./build.sh, not kept in git.
+/dist/
+*.exe
+*.pdb
+
+# Python: icon script and the old main.py
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Operating system and editor clutter
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
