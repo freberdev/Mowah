@@ -6,7 +6,7 @@
 *.exe
 *.pdb
 
-# Python: icon script and the old main.py
+# Python: the icon script in tools/
 __pycache__/
 *.py[cod]
 .venv/

@@ -102,7 +102,3 @@ Klick och tangenttryck från Mowah når inte program som körs som administratö
 - `src/core/` – logiken utan Windows-anrop: motorn som avgör när något ska göras, inställningar, schema, texter. Allt här har tester.
 - `src/win/` – fönstret, systemfältsikonen, timern och anropen till Windows.
 - `res/` – ikoner, manifest och fönstrets layout (`mowah.rc`).
-
-## Äldre versioner
-
-`main.py`, `sans.ps1` och `build-exe.ps1` är de ursprungliga skripten som Mowah ersätter. De ligger kvar tills vidare och används inte av Mowah.
