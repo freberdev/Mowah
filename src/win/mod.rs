@@ -249,8 +249,10 @@ unsafe extern "system" fn dialog_proc(window: HWND, message: u32, wparam: WPARAM
             WTS_SESSION_UNLOCK => APP.with(|app| app.locked.set(false)),
             _ => {}
         },
-        WM_CTLCOLORSTATIC if GetDlgCtrlID(lparam as HWND) == IDC_STATUS => {
-            let on_duty = APP.with(|app| app.status.get().is_armed());
+        WM_CTLCOLORSTATIC if matches!(GetDlgCtrlID(lparam as HWND), IDC_STATUS | IDC_FOOTER) => {
+            // The status is green while Mowah is on duty; the footer is always grey.
+            let is_status = GetDlgCtrlID(lparam as HWND) == IDC_STATUS;
+            let on_duty = is_status && APP.with(|app| app.status.get().is_armed());
             let device = wparam as HDC;
             SetTextColor(device, if on_duty { COLOR_ON_DUTY } else { COLOR_RESTING });
             SetBkMode(device, TRANSPARENT as i32);
@@ -283,6 +285,8 @@ unsafe fn on_init(window: HWND) {
         SendDlgItemMessageW(window, IDC_METHOD, CB_ADDSTRING, 0, name.as_ptr() as LPARAM);
     }
     show_settings(window, &APP.with(|app| app.settings.get()));
+    let footer = text::footer(env!("CARGO_PKG_VERSION"), env!("MOWAH_BUILD_YEAR"), env!("MOWAH_COMPANY"));
+    set_text(window, IDC_FOOTER, &footer);
 
     system::refresh_autostart_path();
     set_checked(window, IDC_AUTOSTART, system::autostart_enabled());

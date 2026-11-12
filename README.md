@@ -65,7 +65,7 @@ Ikonerna ritas av `tools/make_icons.py` (kräver Pillow) och sparas i `res/`.
 
 GitHub bygger `Mowah.exe` och lägger upp den som en Release när en versionstagg pushas. Vanliga pushar till `main` bygger ingenting.
 
-1. Ändra versionsnumret i `Cargo.toml` (`version = "1.0.1"`) och på de fyra ställena i `res/mowah.rc` (`FILEVERSION`, `PRODUCTVERSION` och de två `VALUE`-raderna). Kör `cargo build` en gång så att `Cargo.lock` följer med.
+1. Ändra versionsnumret i `Cargo.toml` (`version = "1.0.1"`) och kör `cargo build` en gång så att `Cargo.lock` följer med. Versionen i fönstrets sidfot och i filens egenskaper hämtas därifrån.
 2. Committa och pusha till `main`.
 3. Tagga och pusha taggen:
 

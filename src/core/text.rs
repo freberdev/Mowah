@@ -33,6 +33,11 @@ pub fn last_action_line(last_action: Option<&str>) -> String {
     }
 }
 
+/// The line at the bottom of the window: which version this is and who made it.
+pub fn footer(version: &str, year: &str, company: &str) -> String {
+    format!("Mowah {version} · © {year} {company}")
+}
+
 fn duration(ms: u64) -> String {
     let secs = ms / 1_000;
     let mins = secs / 60;
@@ -97,6 +102,11 @@ mod tests {
         assert_eq!(tray_tip(Status::PausedUntil), "Mowah – pausad");
         assert_eq!(tray_tip(Status::OutsideSchedule), "Mowah – vilar");
         assert_eq!(tray_tip(Status::Locked), "Mowah – vilar");
+    }
+
+    #[test]
+    fn footer_names_the_version_the_year_and_the_company() {
+        assert_eq!(footer("1.0.0", "2026", "freber dev AB"), "Mowah 1.0.0 · © 2026 freber dev AB");
     }
 
     #[test]
