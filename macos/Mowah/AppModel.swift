@@ -60,6 +60,16 @@ final class AppModel {
         }
     }
 
+    /// The icon tells the state at a glance: plain when on duty, fainter when
+    /// resting, and with a dot when Mowah cannot work without the user's help.
+    var menuBarIcon: String {
+        switch snapshot.status {
+        case .permissionMissing: "MenuBarIconAttention"
+        case .userActive, .keepingAlive: "MenuBarIcon"
+        case .paused, .pausedUntil, .locked, .outsideSchedule: "MenuBarIconResting"
+        }
+    }
+
     func showSettings() {
         settingsWindow.show(model: self)
     }

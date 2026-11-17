@@ -8,7 +8,9 @@ struct MowahApp: App {
         MenuBarExtra {
             MenuContent(model: model)
         } label: {
-            Image(systemName: "cursorarrow")
+            // The label is not shown; it is what VoiceOver reads instead of the
+            // name of the image file.
+            Image(model.menuBarIcon, label: Text(verbatim: "Mowah"))
         }
         .menuBarExtraStyle(.menu)
     }

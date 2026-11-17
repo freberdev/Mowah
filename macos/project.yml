@@ -37,6 +37,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.freberdev.mowah
         PRODUCT_NAME: Mowah
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # Both are overridden by build.sh.
         MARKETING_VERSION: "0.0.0"
         MOWAH_BUILD_YEAR: "0000"

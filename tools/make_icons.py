@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
-"""Draws Mowah's icons and writes them as .ico files into windows/res/.
+"""Draws Mowah's icons: .ico files for Windows into windows/res/, and the app
+icon and menu bar icons for the Mac into the asset catalog under macos/.
 
 Run from the repository root:  python3 tools/make_icons.py [preview.png]
 Needs Pillow. The optional argument writes a contact sheet for eyeballing.
 """
 import io
+import json
 import struct
 import sys
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
-RES = Path(__file__).resolve().parent.parent / "windows" / "res"
+ROOT = Path(__file__).resolve().parent.parent
+RES = ROOT / "windows" / "res"
+MAC_ASSETS = ROOT / "macos" / "Mowah" / "Resources" / "Assets.xcassets"
 
 ACTIVE = ((108, 76, 255), (20, 200, 176))    # indigo -> teal
 PAUSED = ((150, 155, 165), (92, 97, 108))    # light grey -> dark grey
@@ -146,10 +150,75 @@ def contact_sheet(path):
     print(f"preview: {path}")
 
 
+def render_mac_app_icon(pixels):
+    """The app icon for the Mac. macOS icons leave a margin around the shape, so
+    the badge fills 82 % of the canvas, the proportion of Apple's own icon grid."""
+    inner = round(pixels * 0.82)
+    canvas = Image.new("RGBA", (pixels, pixels), (0, 0, 0, 0))
+    offset = (pixels - inner) // 2
+    canvas.alpha_composite(render(inner, ACTIVE), (offset, offset))
+    return canvas
+
+
+def render_menu_bar_icon(pixels, opacity=1.0, dot=False):
+    """The pointer alone, black on transparent. The menu bar tints it, so only the
+    transparency matters: a fainter icon means Mowah is resting, and a dot in the
+    corner means it needs the user's attention."""
+    big = pixels * 8
+    mask = pointer_mask(big, 1.1)
+    if dot:
+        draw = ImageDraw.Draw(mask)
+        cx, cy, r = big * 0.85, big * 0.15, big * 0.13
+        draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=255)
+    mask = mask.resize((pixels, pixels), Image.LANCZOS).point(lambda v: round(v * opacity))
+    icon = Image.new("RGBA", (pixels, pixels), (0, 0, 0, 0))
+    icon.putalpha(mask)
+    return icon
+
+
+def write_json(path, data):
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+
+
+def write_mac_assets():
+    info = {"author": "xcode", "version": 1}
+    MAC_ASSETS.mkdir(parents=True, exist_ok=True)
+    write_json(MAC_ASSETS / "Contents.json", {"info": info})
+
+    app_icon = MAC_ASSETS / "AppIcon.appiconset"
+    app_icon.mkdir(exist_ok=True)
+    images = []
+    for points in (16, 32, 128, 256, 512):
+        for scale in (1, 2):
+            pixels = points * scale
+            name = f"icon_{pixels}.png"
+            render_mac_app_icon(pixels).save(app_icon / name)
+            images.append({"filename": name, "idiom": "mac", "scale": f"{scale}x", "size": f"{points}x{points}"})
+    write_json(app_icon / "Contents.json", {"images": images, "info": info})
+
+    # 18 points is the height macOS draws menu bar icons at.
+    variants = {"MenuBarIcon": {}, "MenuBarIconResting": {"opacity": 0.4}, "MenuBarIconAttention": {"dot": True}}
+    for name, options in variants.items():
+        folder = MAC_ASSETS / f"{name}.imageset"
+        folder.mkdir(exist_ok=True)
+        images = []
+        for scale in (1, 2):
+            filename = f"{name}@{scale}x.png"
+            render_menu_bar_icon(18 * scale, **options).save(folder / filename)
+            images.append({"filename": filename, "idiom": "mac", "scale": f"{scale}x"})
+        write_json(folder / "Contents.json", {
+            "images": images,
+            "info": info,
+            "properties": {"template-rendering-intent": "template"},
+        })
+    print(f"{MAC_ASSETS.relative_to(ROOT)}: app icon in 10 sizes, {len(variants)} menu bar icons")
+
+
 def main():
     RES.mkdir(exist_ok=True)
     write_ico(RES / "mowah.ico", [render(s, ACTIVE) for s in (16, 20, 24, 32, 40, 48, 64, 256)])
     write_ico(RES / "mowah-paused.ico", [render(s, PAUSED) for s in (16, 20, 24, 32, 40, 48)])
+    write_mac_assets()
     if len(sys.argv) > 1:
         contact_sheet(Path(sys.argv[1]))
 
