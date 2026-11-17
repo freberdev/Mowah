@@ -2,7 +2,7 @@
 
 Mowah håller Teams och liknande program "online" och hindrar datorn från att gå i viloläge eller låsa sig, utan att störa när du sitter och arbetar. Det är en fristående Windows-app på ungefär 400 kB som inte kräver någon installation eller runtime.
 
-![Mowahs ikoner](res/icon-preview.png)
+![Mowahs ikoner](windows/res/icon-preview.png)
 
 ## Så fungerar den
 
@@ -40,32 +40,32 @@ På macOS eller Linux, med `rustup` och `mingw-w64` installerade:
 
 ```bash
 rustup target add x86_64-pc-windows-gnu
-./build.sh
+windows/build.sh
 ```
 
 Resultatet hamnar i `dist/Mowah.exe`.
 
-På Windows, med Rust installerat:
+På Windows, med Rust installerat, i mappen `windows`:
 
 ```powershell
 cargo build --release
 ```
 
-Resultatet hamnar i `target\release\mowah.exe`.
+Resultatet hamnar i `windows\target\release\mowah.exe`.
 
-Tester av logiken (när Mowah ska agera, inställningar, schema) körs på vilket system som helst:
+Tester av logiken (när Mowah ska agera, inställningar, schema) körs på vilket system som helst, i mappen `windows`:
 
 ```bash
 cargo test
 ```
 
-Ikonerna ritas av `tools/make_icons.py` (kräver Pillow) och sparas i `res/`.
+Ikonerna ritas av `tools/make_icons.py` (kräver Pillow) och sparas i `windows/res/`.
 
 ## Släppa en ny version
 
 GitHub bygger `Mowah.exe` och lägger upp den som en Release när en versionstagg pushas. Vanliga pushar till `main` bygger ingenting.
 
-1. Ändra versionsnumret i `Cargo.toml` (`version = "1.0.1"`) och kör `cargo build` en gång så att `Cargo.lock` följer med. Versionen i fönstrets sidfot och i filens egenskaper hämtas därifrån.
+1. Ändra versionsnumret i `windows/Cargo.toml` (`version = "1.0.1"`) och kör `cargo build` där en gång så att `Cargo.lock` följer med. Versionen i fönstrets sidfot och i filens egenskaper hämtas därifrån.
 2. Committa och pusha till `main`.
 3. Tagga och pusha taggen:
 
@@ -77,7 +77,7 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-Taggen måste vara versionen i `Cargo.toml` med ett `v` framför, annars avbryts bygget. Arbetsflödet finns i `.github/workflows/release.yml`. Det kör testerna, bygger med samma `build.sh` som ovan och bifogar filen till releasen.
+Taggen måste vara versionen i `windows/Cargo.toml` med ett `v` framför, annars avbryts bygget. Arbetsflödet finns i `.github/workflows/release.yml`. Det kör testerna, bygger med samma `build.sh` som ovan och bifogar filen till releasen.
 
 ## Var saker sparas
 
@@ -99,6 +99,6 @@ Klick och tangenttryck från Mowah når inte program som körs som administratö
 
 ## Kodens upplägg
 
-- `src/core/` – logiken utan Windows-anrop: motorn som avgör när något ska göras, inställningar, schema, texter. Allt här har tester.
-- `src/win/` – fönstret, systemfältsikonen, timern och anropen till Windows.
-- `res/` – ikoner, manifest och fönstrets layout (`mowah.rc`).
+- `windows/src/core/` – logiken utan Windows-anrop: motorn som avgör när något ska göras, inställningar, schema, texter. Allt här har tester.
+- `windows/src/win/` – fönstret, systemfältsikonen, timern och anropen till Windows.
+- `windows/res/` – ikoner, manifest och fönstrets layout (`mowah.rc`).

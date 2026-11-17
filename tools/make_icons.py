@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draws Mowah's icons and writes them as .ico files into res/.
+"""Draws Mowah's icons and writes them as .ico files into windows/res/.
 
 Run from the repository root:  python3 tools/make_icons.py [preview.png]
 Needs Pillow. The optional argument writes a contact sheet for eyeballing.
@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
-RES = Path(__file__).resolve().parent.parent / "res"
+RES = Path(__file__).resolve().parent.parent / "windows" / "res"
 
 ACTIVE = ((108, 76, 255), (20, 200, 176))    # indigo -> teal
 PAUSED = ((150, 155, 165), (92, 97, 108))    # light grey -> dark grey

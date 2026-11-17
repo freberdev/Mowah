@@ -1,7 +1,14 @@
 # Rust build output
-/target/
+/windows/target/
 
-# The finished program. Built by ./build.sh, not kept in git.
+# Xcode and Swift build output
+/macos/build/
+/macos/*.xcodeproj
+.build/
+.swiftpm/
+xcuserdata/
+
+# The finished programs. Built by windows/build.sh and macos/build.sh, not kept in git.
 /dist/
 *.exe
 *.pdb
