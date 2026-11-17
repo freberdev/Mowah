@@ -50,4 +50,7 @@ targets:
         # The app holds the right to send input, so nothing may be loaded into it
         # from outside. Notarisation requires this as well.
         ENABLE_HARDENED_RUNTIME: YES
+        # Xcode otherwise adds the right to attach a debugger to the app. Apple
+        # refuses to notarise an app that asks for it.
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
         GENERATE_INFOPLIST_FILE: NO

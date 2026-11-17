@@ -1,10 +1,15 @@
 # Builds both apps and publishes them in one GitHub Release when a version tag
-# is pushed:
+# is pushed on its own:
 #
 #   git tag v1.1.1
 #   git push origin v1.1.1
 #
 # The tag must match the version in windows/Cargo.toml, with a leading "v".
+#
+# The Mac app built here is signed to run locally only. A release made by hand
+# with `gh release create`, which carries the signed and notarised Mac app,
+# creates its tag and its release in one step. This workflow then finds the
+# release already there and leaves it alone.
 name: Release
 
 on:
@@ -16,7 +21,27 @@ permissions:
   contents: read
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.release.outputs.exists }}
+    steps:
+      - name: Look for a release with this tag
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Release $GITHUB_REF_NAME already exists, so nothing is built."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
   windows:
+    needs: check
+    if: needs.check.outputs.exists == 'false'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,6 +69,8 @@ jobs:
           if-no-files-found: error
 
   macos:
+    needs: check
+    if: needs.check.outputs.exists == 'false'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7

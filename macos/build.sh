@@ -19,13 +19,19 @@ if [ -z "$identity" ] && [ -f signing-identity.local ]; then
     identity="$(head -n 1 signing-identity.local)"
 fi
 identity="${identity:--}"
+# Apple only notarises an app whose signature carries a timestamp from Apple's
+# server. Local builds do without, so they also work offline.
+case "$identity" in
+    "Developer ID"*) timestamp="--timestamp" ;;
+    *) timestamp="" ;;
+esac
 
 xcodegen generate --quiet
 xcodebuild -project Mowah.xcodeproj -scheme Mowah -configuration Release \
     -derivedDataPath build -quiet \
     ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
     MARKETING_VERSION="$version" MOWAH_BUILD_YEAR="$year" \
-    CODE_SIGN_IDENTITY="$identity" \
+    CODE_SIGN_IDENTITY="$identity" OTHER_CODE_SIGN_FLAGS="$timestamp" \
     build
 
 mkdir -p ../dist

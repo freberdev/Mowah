@@ -109,11 +109,25 @@ Ikonerna ritas av `tools/make_icons.py` (kräver Pillow), för båda apparna.
 
 ## Släppa en ny version
 
-GitHub bygger båda apparna och lägger upp dem i samma Release när en versionstagg pushas. Vanliga pushar till `main` bygger ingenting.
+Ändra först versionsnumret i `windows/Cargo.toml` (`version = "1.1.1"`) och kör `cargo build` där en gång så att `Cargo.lock` följer med. Båda apparna hämtar versionen därifrån. Committa och pusha till `main`.
 
-1. Ändra versionsnumret i `windows/Cargo.toml` (`version = "1.1.1"`) och kör `cargo build` där en gång så att `Cargo.lock` följer med. Båda apparna hämtar versionen därifrån.
-2. Committa och pusha till `main`.
-3. Tagga och pusha taggen:
+**Med signerad Mac-app.** Bygg båda filerna på en Mac som har Developer ID-certifikatet och uppgifterna för notarisering i nyckelringen, och ladda upp dem:
+
+```bash
+windows/build.sh
+```
+
+```bash
+MOWAH_SIGN_IDENTITY="Developer ID Application: Namn (TEAMID)" macos/release.sh
+```
+
+```bash
+gh release create v1.1.1 dist/Mowah.exe dist/Mowah-mac.zip --title "Mowah v1.1.1" --generate-notes
+```
+
+`macos/release.sh` signerar appen, skickar den till Apple för godkännande och fäster godkännandet vid appen. `gh release create` skapar taggen och releasen i ett steg.
+
+**Utan signering.** Pusha bara en tagg, så bygger GitHub båda apparna och lägger upp dem. Mac-appen är då bara signerad för att kunna köras lokalt.
 
 ```bash
 git tag v1.1.1
@@ -123,20 +137,20 @@ git tag v1.1.1
 git push origin v1.1.1
 ```
 
-Taggen måste vara versionen i `windows/Cargo.toml` med ett `v` framför, annars avbryts bygget. Arbetsflödet finns i `.github/workflows/release.yml`. Det kör testerna, bygger med samma skript som ovan och bifogar `Mowah.exe` och `Mowah-mac.zip` till releasen.
+Taggen måste vara versionen i `windows/Cargo.toml` med ett `v` framför, annars avbryts bygget. Arbetsflödet finns i `.github/workflows/release.yml`. Finns det redan en release för taggen, som efter `gh release create`, bygger det ingenting.
 
 ## Signering
 
-Ingen av apparna är signerad med ett utgivarcertifikat ännu.
+Mac-appen kan signeras med ett Developer ID. Windows-appen är inte signerad med något utgivarcertifikat.
 
 **Windows.** Mowah begär inga administratörsrättigheter, installerar inga tangentbords- eller mushookar, och innehåller ingen packad eller dold kod. Laddas filen ner från nätet kan Windows SmartScreen ändå varna för "okänd utgivare". En fil du byggt själv eller kopierat över direkt får normalt inte den varningen. På en arbetsdator med låst programpolicy kan osignerade program vara blockerade oavsett.
 
-**Mac.** Appen är bara signerad för att kunna köras lokalt. Det betyder:
+**Mac.** En app som är byggd med `macos/release.sh` är signerad med ett Developer ID och godkänd av Apple, och öppnas utan varning. En app som GitHub har byggt från en tagg, eller som är byggd med `macos/build.sh` utan certifikat, är bara signerad för att kunna köras lokalt. Det betyder:
 
 - En nedladdad app stoppas första gången. Godkänn den under Integritet och säkerhet i Systeminställningar.
 - Behörigheten Hjälpmedel hör till den exakta filen. Efter en ny version kan den behöva tas bort ur listan och ges på nytt.
 
-`macos/build.sh` signerar med den identitet som står i miljövariabeln `MOWAH_SIGN_IDENTITY`. Med ett Developer ID och Apples godkännande försvinner båda punkterna.
+`macos/build.sh` signerar med den identitet som står i miljövariabeln `MOWAH_SIGN_IDENTITY`.
 
 Den som bygger själv kan slippa den andra punkten genom att skriva namnet på sitt eget utvecklarcertifikat på första raden i filen `macos/signing-identity.local`, som inte ligger i git. macOS känner då igen appen på certifikatet i stället för på den exakta filen, och behörigheten ligger kvar mellan byggen. En sådan app är till för den egna Macen och ska inte delas ut.
 
