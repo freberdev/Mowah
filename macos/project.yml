@@ -1,0 +1,50 @@
+# The Xcode project is generated from this file with XcodeGen and is not kept in git:
+#
+#   xcodegen generate
+#
+# build.sh does that, and passes in the version and the build year.
+name: Mowah
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+packages:
+  MowahCore:
+    path: MowahCore
+targets:
+  Mowah:
+    type: application
+    platform: macOS
+    sources:
+      - Mowah
+    dependencies:
+      - package: MowahCore
+    info:
+      path: Mowah/Info.plist
+      properties:
+        CFBundleDisplayName: Mowah
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, sv]
+        # A menu bar app: no Dock icon and no main menu.
+        LSUIElement: true
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: "© $(MOWAH_BUILD_YEAR) freber dev AB"
+        MowahBuildYear: $(MOWAH_BUILD_YEAR)
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.freberdev.mowah
+        PRODUCT_NAME: Mowah
+        # Both are overridden by build.sh.
+        MARKETING_VERSION: "0.0.0"
+        MOWAH_BUILD_YEAR: "0000"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        # Signed to run locally only. No sandbox: a sandboxed app may not send input.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: NO
+        GENERATE_INFOPLIST_FILE: NO

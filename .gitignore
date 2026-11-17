@@ -4,6 +4,7 @@
 # Xcode and Swift build output
 /macos/build/
 /macos/*.xcodeproj
+/macos/Mowah/Info.plist
 .build/
 .swiftpm/
 xcuserdata/
