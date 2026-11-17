@@ -147,3 +147,7 @@ Den som bygger själv kan slippa den andra punkten genom att skriva namnet på s
 - `windows/res/` – ikoner, manifest och fönstrets layout (`mowah.rc`).
 - `macos/Mowah/` – menyraden, inställningsfönstret och anropen till macOS. Texterna ligger i `Resources/Localizable.xcstrings`.
 - `tools/` – skripten för ikoner, texter och versionskontroll.
+
+## Licens
+
+Mowah har MIT-licens. Hela texten står i [LICENSE](LICENSE).
