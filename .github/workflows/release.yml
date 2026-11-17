@@ -1,7 +1,8 @@
-# Builds Mowah.exe and publishes it as a GitHub Release when a version tag is pushed:
+# Builds both apps and publishes them in one GitHub Release when a version tag
+# is pushed:
 #
-#   git tag v1.0.1
-#   git push origin v1.0.1
+#   git tag v1.1.1
+#   git push origin v1.1.1
 #
 # The tag must match the version in windows/Cargo.toml, with a leading "v".
 name: Release
@@ -12,21 +13,16 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
+  windows:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Check that the tag matches windows/Cargo.toml
-        run: |
-          version="$(sed -n 's/^version = "\(.*\)"$/\1/p' windows/Cargo.toml | head -n 1)"
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match version $version in windows/Cargo.toml"
-            exit 1
-          fi
+      - name: Check that the tag matches the version
+        run: tools/check_version_tag.sh "$GITHUB_REF_NAME"
 
       - name: Install the Windows cross-compiler
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mingw-w64
@@ -41,11 +37,56 @@ jobs:
       - name: Build Mowah.exe
         run: windows/build.sh
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: dist/Mowah.exe
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check that the tag matches the version
+        run: tools/check_version_tag.sh "$GITHUB_REF_NAME"
+
+      - name: Run the tests
+        working-directory: macos/MowahCore
+        run: swift test
+
+      - name: Check that every text exists in both languages
+        run: python3 tools/check_strings.py
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build Mowah.app
+        run: macos/build.sh
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos
+          path: dist/Mowah-mac.zip
+          if-no-files-found: error
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          sha256sum dist/Mowah.exe
-          gh release create "$GITHUB_REF_NAME" dist/Mowah.exe \
+          sha256sum dist/Mowah.exe dist/Mowah-mac.zip
+          gh release create "$GITHUB_REF_NAME" dist/Mowah.exe dist/Mowah-mac.zip \
             --title "Mowah $GITHUB_REF_NAME" \
             --generate-notes
