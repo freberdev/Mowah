@@ -94,7 +94,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: macos
-          path: dist/Mowah-mac.zip
+          path: dist/Mowah.dmg
           if-no-files-found: error
 
   release:
@@ -113,7 +113,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          sha256sum dist/Mowah.exe dist/Mowah-mac.zip
-          gh release create "$GITHUB_REF_NAME" dist/Mowah.exe dist/Mowah-mac.zip \
+          sha256sum dist/Mowah.exe dist/Mowah.dmg
+          gh release create "$GITHUB_REF_NAME" dist/Mowah.exe dist/Mowah.dmg \
             --title "Mowah $GITHUB_REF_NAME" \
             --generate-notes

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Builds Mowah for Mac, for both Apple silicon and Intel, and puts the result
-# in dist/Mowah-mac.zip at the top of the repository.
+# in dist/Mowah.dmg at the top of the repository.
 # Needs: Xcode and XcodeGen.
 set -eu
 cd "$(dirname "$0")"
@@ -34,7 +34,4 @@ xcodebuild -project Mowah.xcodeproj -scheme Mowah -configuration Release \
     CODE_SIGN_IDENTITY="$identity" OTHER_CODE_SIGN_FLAGS="$timestamp" \
     build
 
-mkdir -p ../dist
-rm -f ../dist/Mowah-mac.zip
-ditto -c -k --keepParent build/Build/Products/Release/Mowah.app ../dist/Mowah-mac.zip
-ls -l ../dist/Mowah-mac.zip
+./package.sh "$identity"

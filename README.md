@@ -6,7 +6,7 @@ Mowah håller Teams och liknande program "online" och hindrar datorn från att g
 
 | | Windows | Mac |
 |---|---|---|
-| Fil | `Mowah.exe`, ungefär 400 kB | `Mowah.app`, i `Mowah-mac.zip` |
+| Fil | `Mowah.exe`, ungefär 400 kB | `Mowah.app`, i `Mowah.dmg` |
 | Kräver | Windows 10 eller 11 | macOS 14 eller nyare, Apple-processor eller Intel |
 | Ligger i | systemfältet | menyraden |
 | Språk | svenska | svenska och engelska, efter Macens språk |
@@ -61,7 +61,7 @@ Klick och tangenttryck från Mowah når inte program som körs som administratö
 
 ## Mac
 
-Packa upp `Mowah-mac.zip` och flytta `Mowah.app` till mappen Program innan du startar den. En app som körs direkt ur Hämtade filer startas av macOS från en tillfällig plats, och då kan varken behörigheten eller starten vid inloggning hitta tillbaka till den.
+Öppna `Mowah.dmg` och dra `Mowah.app` till mappen Program innan du startar den. En app som körs direkt ur skivavbilden eller ur Hämtade filer startas av macOS från en tillfällig plats, och då kan varken behörigheten eller starten vid inloggning hitta tillbaka till den.
 
 Mowah syns som en pekare i menyraden, utan ikon i Dock. Pekaren är tydlig när Mowah är aktiv, svagare när den är pausad eller vilar, och har en prick när den behöver din hjälp. Menyn visar statusen och har Pausa, Pausa i 1 timme, Inställningar och Avsluta.
 
@@ -87,7 +87,7 @@ Mac-appen, på en Mac med Xcode och XcodeGen:
 macos/build.sh
 ```
 
-Resultatet hamnar i `dist/Mowah-mac.zip`. Xcode-projektet skapas från `macos/project.yml` och ligger inte i git.
+Resultatet hamnar i `dist/Mowah.dmg`. Xcode-projektet skapas från `macos/project.yml` och ligger inte i git.
 
 Tester av logiken, det vill säga när Mowah ska agera, inställningarna och schemat:
 
@@ -122,10 +122,10 @@ MOWAH_SIGN_IDENTITY="Developer ID Application: Namn (TEAMID)" macos/release.sh
 ```
 
 ```bash
-gh release create v1.1.1 dist/Mowah.exe dist/Mowah-mac.zip --title "Mowah v1.1.1" --generate-notes
+gh release create v1.1.1 dist/Mowah.exe dist/Mowah.dmg --title "Mowah v1.1.1" --generate-notes
 ```
 
-`macos/release.sh` signerar appen, skickar den till Apple för godkännande och fäster godkännandet vid appen. `gh release create` skapar taggen och releasen i ett steg.
+`macos/release.sh` signerar appen och skivavbilden, skickar dem till Apple för godkännande och fäster godkännandet vid båda. `gh release create` skapar taggen och releasen i ett steg.
 
 **Utan signering.** Pusha bara en tagg, så bygger GitHub båda apparna och lägger upp dem. Mac-appen är då bara signerad för att kunna köras lokalt.
 
