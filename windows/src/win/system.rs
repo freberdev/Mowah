@@ -6,6 +6,7 @@ use std::ptr::{null, null_mut};
 
 use windows_sys::core::{w, PCWSTR};
 use windows_sys::Win32::Foundation::{ERROR_SUCCESS, SYSTEMTIME};
+use windows_sys::Win32::Globalization::GetUserDefaultUILanguage;
 use windows_sys::Win32::System::Power::{
     SetThreadExecutionState, ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED, EXECUTION_STATE,
 };
@@ -22,10 +23,16 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 use crate::core::engine::KeepAwake;
 use crate::core::schedule::LocalTime;
 use crate::core::settings::Settings;
+use crate::core::text;
 
 /// UTF-16 copy of `text` with the terminating zero Windows expects.
 pub fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+/// Whether the user has Windows itself shown in Swedish.
+pub fn system_is_swedish() -> bool {
+    text::is_swedish(unsafe { GetUserDefaultUILanguage() })
 }
 
 pub fn now_ms() -> u64 {

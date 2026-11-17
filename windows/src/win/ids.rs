@@ -34,6 +34,8 @@ pub const IDC_GRP_PROGRAM: i32 = 1050;
 pub const IDC_AUTOSTART: i32 = 1051;
 pub const IDC_START_MINIMIZED: i32 = 1052;
 pub const IDC_CLOSE_TO_TRAY: i32 = 1053;
+pub const IDC_LBL_LANGUAGE: i32 = 1054;
+pub const IDC_LANGUAGE: i32 = 1055;
 pub const IDC_FOOTER: i32 = 1060;
 
 /// Tray menu commands.

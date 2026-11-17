@@ -35,7 +35,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     IsIconic, KillTimer, LoadCursorW, LoadImageW, MessageBoxW, PostMessageW, PostQuitMessage, RegisterClassExW,
     RegisterWindowMessageW, SendDlgItemMessageW, SetDlgItemInt, SetDlgItemTextW, SetForegroundWindow,
     SetMenuDefaultItem, SetTimer, ShowWindow, TrackPopupMenu, TranslateMessage, BN_CLICKED, CBN_SELCHANGE,
-    CB_ADDSTRING, CB_GETCURSEL, CB_SETCURSEL, DLGWINDOWEXTRA, EN_KILLFOCUS, HICON, IDCANCEL, IDC_ARROW, IDOK,
+    CB_ADDSTRING, CB_GETCURSEL, CB_RESETCONTENT, CB_SETCURSEL, DLGWINDOWEXTRA, EN_KILLFOCUS, HICON, IDCANCEL, IDC_ARROW, IDOK,
     IMAGE_ICON, LR_DEFAULTCOLOR, MB_ICONERROR, MF_SEPARATOR, MF_STRING, MSG, SC_MINIMIZE, SM_CXICON,
     SM_CXSMICON, SM_CYICON, SM_CYSMICON, SW_HIDE, SW_RESTORE, SW_SHOW, TPM_BOTTOMALIGN, TPM_NONOTIFY, TPM_RETURNCMD,
     TPM_RIGHTBUTTON, WM_APP, WM_CLOSE, WM_COMMAND, WM_CONTEXTMENU, WM_CTLCOLORSTATIC, WM_DESTROY, WM_INITDIALOG,
@@ -44,8 +44,8 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 };
 
 use crate::core::engine::{keep_awake, Engine, Outcome, Status, TickInput};
-use crate::core::settings::{format_hhmm, parse_hhmm, Method, Settings};
-use crate::core::text;
+use crate::core::settings::{format_hhmm, parse_hhmm, LanguageChoice, Method, Settings};
+use crate::core::text::{self, Language, Texts};
 
 use ids::*;
 use system::wide;
@@ -69,42 +69,44 @@ const MINUTES_PER_DAY: u16 = 24 * 60;
 const COLOR_ON_DUTY: u32 = 0x003C_8016;
 const COLOR_RESTING: u32 = 0x006E_6E6E;
 
-/// The methods in the order they appear in the drop-down list.
-const METHODS: [(Method, &str); 3] = [
-    (Method::Nudge, "Osynlig musknuff (1 pixel)"),
-    (Method::VisibleMove, "Synlig musrörelse"),
-    (Method::KeyF15, "Tangenten F15"),
-];
+/// The methods and the languages in the order they appear in their drop-down lists.
+const METHODS: [Method; 3] = [Method::Nudge, Method::VisibleMove, Method::KeyF15];
+const LANGUAGES: [LanguageChoice; 3] = [LanguageChoice::System, LanguageChoice::Swedish, LanguageChoice::English];
 
-/// Swedish text for every fixed label. The layout itself is in res/mowah.rc.
-const LABELS: [(i32, &str); 20] = [
-    (IDC_GRP_ACTIVITY, "Aktivitet"),
-    (IDC_LBL_METHOD, "Metod"),
-    (IDC_LBL_CIRCLE, "Cirkelns storlek"),
-    (IDC_LBL_CIRCLE_UNIT, "pixlar"),
-    (IDC_LBL_IDLE, "Kör när inaktiv i"),
-    (IDC_LBL_IDLE_UNIT, "sekunder"),
-    (IDC_LBL_INTERVAL, "Upprepa var"),
-    (IDC_LBL_DASH, "–"),
-    (IDC_LBL_INT_UNIT, "sekunder"),
-    (IDC_CLICK, "Vänsterklicka också (där pekaren står)"),
-    (IDC_GRP_AWAKE, "Håll datorn vaken"),
-    (IDC_PREVENT_SLEEP, "Förhindra viloläge"),
-    (IDC_KEEP_DISPLAY, "Förhindra att skärmen släcks"),
-    (IDC_GRP_SCHEDULE, "Schema"),
-    (IDC_SCHEDULE, "Bara mån–fre mellan"),
-    (IDC_LBL_AND, "och"),
-    (IDC_GRP_PROGRAM, "Program"),
-    (IDC_AUTOSTART, "Starta med Windows"),
-    (IDC_START_MINIMIZED, "Starta minimerad i systemfältet"),
-    (IDC_CLOSE_TO_TRAY, "Stäng-knappen minimerar till systemfältet"),
-];
+/// The text of every fixed label. The layout itself is in res/mowah.rc.
+fn labels(t: &Texts) -> [(i32, &'static str); 21] {
+    [
+        (IDC_GRP_ACTIVITY, t.activity),
+        (IDC_LBL_METHOD, t.method),
+        (IDC_LBL_CIRCLE, t.circle_size),
+        (IDC_LBL_CIRCLE_UNIT, t.pixels),
+        (IDC_LBL_IDLE, t.idle_for),
+        (IDC_LBL_IDLE_UNIT, t.seconds),
+        (IDC_LBL_INTERVAL, t.repeat_every),
+        (IDC_LBL_DASH, "–"),
+        (IDC_LBL_INT_UNIT, t.seconds),
+        (IDC_CLICK, t.left_click),
+        (IDC_GRP_AWAKE, t.keep_awake),
+        (IDC_PREVENT_SLEEP, t.prevent_sleep),
+        (IDC_KEEP_DISPLAY, t.keep_display_on),
+        (IDC_GRP_SCHEDULE, t.schedule),
+        (IDC_SCHEDULE, t.schedule_between),
+        (IDC_LBL_AND, t.and),
+        (IDC_GRP_PROGRAM, t.program),
+        (IDC_AUTOSTART, t.autostart),
+        (IDC_START_MINIMIZED, t.start_minimized),
+        (IDC_CLOSE_TO_TRAY, t.close_to_tray),
+        (IDC_LBL_LANGUAGE, t.language),
+    ]
+}
 
 /// Everything the window procedure needs between messages. Each field has its own
 /// cell so that a message arriving in the middle of another one can never find the
 /// state locked. The engine is only ever borrowed around a single `tick` call.
 struct App {
     settings: Cell<Settings>,
+    /// The language everything is shown in, worked out from the setting.
+    language: Cell<Language>,
     engine: RefCell<Engine>,
     locked: Cell<bool>,
     status: Cell<Status>,
@@ -126,6 +128,8 @@ thread_local! {
         let seed = SystemTime::now().duration_since(UNIX_EPOCH).map_or(1, |d| d.as_nanos() as u64);
         App {
             settings: Cell::new(Settings::default()),
+            // Until the settings have been read, a message can only follow Windows.
+            language: Cell::new(text::resolve(LanguageChoice::System, system::system_is_swedish())),
             engine: RefCell::new(Engine::new(seed)),
             locked: Cell::new(false),
             status: Cell::new(Status::UserActive),
@@ -182,7 +186,10 @@ pub fn run() {
         if first_run {
             system::save_settings(&settings);
         }
-        APP.with(|app| app.settings.set(settings));
+        APP.with(|app| {
+            app.settings.set(settings);
+            app.language.set(text::resolve(settings.language, system::system_is_swedish()));
+        });
 
         let window = CreateDialogParamW(instance, resource(IDD_MAIN), null_mut(), Some(dialog_proc), 0);
         if window.is_null() {
@@ -205,7 +212,16 @@ pub fn run() {
 }
 
 unsafe fn report_startup_failure() {
-    MessageBoxW(null_mut(), w!("Mowah kunde inte starta."), w!("Mowah"), MB_ICONERROR);
+    let message = wide(current_texts().startup_failure);
+    MessageBoxW(null_mut(), message.as_ptr(), w!("Mowah"), MB_ICONERROR);
+}
+
+fn current_language() -> Language {
+    APP.with(|app| app.language.get())
+}
+
+fn current_texts() -> &'static Texts {
+    text::texts(current_language())
 }
 
 /// Resource IDs are passed to Windows disguised as string pointers.
@@ -277,13 +293,7 @@ unsafe fn on_init(window: HWND) {
         app.taskbar_created.set(RegisterWindowMessageW(w!("TaskbarCreated")));
     });
 
-    for (id, label) in LABELS {
-        set_text(window, id, label);
-    }
-    for (_, name) in METHODS {
-        let name = wide(name);
-        SendDlgItemMessageW(window, IDC_METHOD, CB_ADDSTRING, 0, name.as_ptr() as LPARAM);
-    }
+    show_language(window);
     show_settings(window, &APP.with(|app| app.settings.get()));
     let footer = text::footer(env!("CARGO_PKG_VERSION"), env!("MOWAH_BUILD_YEAR"), env!("MOWAH_COMPANY"));
     set_text(window, IDC_FOOTER, &footer);
@@ -319,7 +329,7 @@ unsafe fn on_command(window: HWND, id: i32, notification: u32) -> bool {
                 set_checked(window, IDC_AUTOSTART, system::autostart_enabled());
             }
         }
-        (IDC_METHOD, CBN_SELCHANGE)
+        (IDC_METHOD | IDC_LANGUAGE, CBN_SELCHANGE)
         | (
             IDC_CLICK | IDC_PREVENT_SLEEP | IDC_KEEP_DISPLAY | IDC_SCHEDULE | IDC_START_MINIMIZED
             | IDC_CLOSE_TO_TRAY,
@@ -381,12 +391,16 @@ unsafe fn show_status(window: HWND, settings: &Settings, outcome: Outcome) {
         )
     });
 
-    set_text(window, IDC_STATUS, &text::headline(outcome.status, outcome.user_idle_ms, pause_end.as_deref()));
-    set_text(window, IDC_LAST_ACTION, &text::last_action_line(last_action.as_deref()));
-    set_text(window, IDC_PAUSE, if paused { "Återuppta" } else { "Pausa" });
+    let language = current_language();
+    let texts = text::texts(language);
+    let headline = text::headline(language, outcome.status, outcome.user_idle_ms, pause_end.as_deref());
+    set_text(window, IDC_STATUS, &headline);
+    set_text(window, IDC_LAST_ACTION, &text::last_action_line(language, last_action.as_deref()));
+    set_text(window, IDC_PAUSE, if paused { texts.resume } else { texts.pause });
 
-    // Also true while the icon is still missing, so a failed add is retried every tick.
-    if APP.with(|app| app.tray_tip.get()) != text::tray_tip(outcome.status) {
+    // Also true while the icon is still missing, so a failed add is retried every
+    // tick, and right after the language was changed.
+    if APP.with(|app| app.tray_tip.get()) != text::tray_tip(language, outcome.status) {
         show_tray_icon(window);
     }
 }
@@ -445,20 +459,54 @@ unsafe fn close_window(window: HWND) {
 unsafe fn apply_settings(window: HWND) {
     let previous = APP.with(|app| app.settings.get());
     let updated = read_settings(window, previous);
+    let language = text::resolve(updated.language, system::system_is_swedish());
+    let language_changed = APP.with(|app| app.language.replace(language)) != language;
+    if language_changed {
+        // Refilling the lists drops their selections; `show_settings` puts them back.
+        show_language(window);
+    }
     show_settings(window, &updated);
     if updated != previous {
         APP.with(|app| app.settings.set(updated));
         system::save_settings(&updated);
     }
+    if language_changed {
+        // Rewrites the status, the pause button and the tip on the tray icon.
+        tick(window);
+    }
+}
+
+/// Writes every fixed text in the current language: the labels and both lists.
+unsafe fn show_language(window: HWND) {
+    let texts = current_texts();
+    for (id, label) in labels(texts) {
+        set_text(window, id, label);
+    }
+    fill_list(window, IDC_METHOD, &[texts.method_nudge, texts.method_visible_move, texts.method_key_f15]);
+    fill_list(window, IDC_LANGUAGE, &[texts.follow_system, text::SWEDISH_NAME, text::ENGLISH_NAME]);
+}
+
+/// Replaces the entries of a drop-down list. Nothing is selected afterwards.
+unsafe fn fill_list(window: HWND, id: i32, entries: &[&str]) {
+    SendDlgItemMessageW(window, id, CB_RESETCONTENT, 0, 0);
+    for entry in entries {
+        let entry = wide(entry);
+        SendDlgItemMessageW(window, id, CB_ADDSTRING, 0, entry.as_ptr() as LPARAM);
+    }
+}
+
+/// The entry selected in a drop-down list, if any.
+unsafe fn selected_index(window: HWND, id: i32) -> Option<usize> {
+    usize::try_from(SendDlgItemMessageW(window, id, CB_GETCURSEL, 0, 0)).ok()
 }
 
 /// Anything unreadable in a text box keeps its previous value.
 unsafe fn read_settings(window: HWND, previous: Settings) -> Settings {
-    let selected = SendDlgItemMessageW(window, IDC_METHOD, CB_GETCURSEL, 0, 0);
-    let method = usize::try_from(selected).ok().and_then(|index| METHODS.get(index));
+    let method = selected_index(window, IDC_METHOD).and_then(|index| METHODS.get(index));
+    let language = selected_index(window, IDC_LANGUAGE).and_then(|index| LANGUAGES.get(index));
     let time = |id: i32, fallback: u16| parse_hhmm(&get_text(window, id)).unwrap_or(fallback);
     Settings {
-        method: method.map_or(previous.method, |(method, _)| *method),
+        method: method.copied().unwrap_or(previous.method),
         circle_diameter_px: get_number(window, IDC_CIRCLE).unwrap_or(previous.circle_diameter_px),
         idle_threshold_secs: get_number(window, IDC_IDLE).unwrap_or(previous.idle_threshold_secs),
         interval_min_secs: get_number(window, IDC_INTERVAL_MIN).unwrap_or(previous.interval_min_secs),
@@ -471,14 +519,16 @@ unsafe fn read_settings(window: HWND, previous: Settings) -> Settings {
         schedule_end_min: time(IDC_SCHEDULE_TO, previous.schedule_end_min),
         start_minimized: is_checked(window, IDC_START_MINIMIZED),
         close_to_tray: is_checked(window, IDC_CLOSE_TO_TRAY),
-        language: previous.language,
+        language: language.copied().unwrap_or(previous.language),
     }
     .normalized()
 }
 
 unsafe fn show_settings(window: HWND, settings: &Settings) {
-    let index = METHODS.iter().position(|(method, _)| *method == settings.method).unwrap_or(0);
-    SendDlgItemMessageW(window, IDC_METHOD, CB_SETCURSEL, index, 0);
+    let method = METHODS.iter().position(|method| *method == settings.method).unwrap_or(0);
+    SendDlgItemMessageW(window, IDC_METHOD, CB_SETCURSEL, method, 0);
+    let language = LANGUAGES.iter().position(|language| *language == settings.language).unwrap_or(0);
+    SendDlgItemMessageW(window, IDC_LANGUAGE, CB_SETCURSEL, language, 0);
     set_number(window, IDC_CIRCLE, settings.circle_diameter_px);
     // The circle size only means something for the visible movement.
     let draws_circle = i32::from(settings.method == Method::VisibleMove);
@@ -549,7 +599,7 @@ unsafe fn show_tray_icon(window: HWND) {
         (app.status.get(), app.icon_on_duty.get(), app.icon_resting.get(), app.tray_added.get())
     });
     let action = if added { NIM_MODIFY } else { NIM_ADD };
-    let tip = text::tray_tip(status);
+    let tip = text::tray_tip(current_language(), status);
 
     let mut data = tray_data(window);
     data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
@@ -575,11 +625,14 @@ unsafe fn show_tray_menu(window: HWND) {
     if menu.is_null() {
         return;
     }
-    AppendMenuW(menu, MF_STRING, IDM_OPEN, w!("Öppna Mowah"));
-    AppendMenuW(menu, MF_STRING, IDM_TOGGLE_PAUSE, if paused { w!("Återuppta") } else { w!("Pausa") });
-    AppendMenuW(menu, MF_STRING, IDM_PAUSE_HOUR, w!("Pausa i 1 timme"));
+    let texts = current_texts();
+    // The menu copies each text, so the buffer only has to live through the call.
+    let add = |id: usize, label: &str| AppendMenuW(menu, MF_STRING, id, wide(label).as_ptr());
+    add(IDM_OPEN, texts.menu_open);
+    add(IDM_TOGGLE_PAUSE, if paused { texts.resume } else { texts.pause });
+    add(IDM_PAUSE_HOUR, texts.menu_pause_hour);
     AppendMenuW(menu, MF_SEPARATOR, 0, null());
-    AppendMenuW(menu, MF_STRING, IDM_EXIT, w!("Avsluta"));
+    add(IDM_EXIT, texts.menu_exit);
     SetMenuDefaultItem(menu, IDM_OPEN as u32, 0);
 
     let mut cursor = POINT { x: 0, y: 0 };

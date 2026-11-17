@@ -1,8 +1,11 @@
 // Resources for Mowah: icons, manifest, version info and the main window layout.
 //
 // Every control ID here is mirrored in src/win/ids.rs. All visible text is ASCII
-// placeholder text; the Swedish wording is set from Rust when the window opens,
-// so this file never depends on how a resource compiler reads non-ASCII characters.
+// placeholder text; the wording, in Swedish or English, is set from Rust when the
+// window opens, so this file never depends on how a resource compiler reads
+// non-ASCII characters.
+//
+// The label column is as wide as the longest label in either language needs.
 //
 // The version numbers, company name and copyright line come from mowah_build.h,
 // which build.rs writes from Cargo.toml before this file is compiled.
@@ -44,6 +47,8 @@
 #define IDC_AUTOSTART       1051
 #define IDC_START_MINIMIZED 1052
 #define IDC_CLOSE_TO_TRAY   1053
+#define IDC_LBL_LANGUAGE    1054
+#define IDC_LANGUAGE        1055
 #define IDC_FOOTER          1060
 
 IDI_APP     ICON "mowah.ico"
@@ -80,7 +85,7 @@ BEGIN
     END
 END
 
-IDD_MAIN DIALOGEX 0, 0, 262, 285
+IDD_MAIN DIALOGEX 0, 0, 262, 303
 STYLE DS_SETFONT | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Mowah"
 CLASS "MowahMainWindow"
@@ -91,20 +96,20 @@ BEGIN
     PUSHBUTTON      "Pause", IDC_PAUSE, 196, 9, 58, 16
 
     GROUPBOX        "Activity", IDC_GRP_ACTIVITY, 7, 34, 248, 96
-    LTEXT           "Method", IDC_LBL_METHOD, 15, 49, 72, 9
-    COMBOBOX        IDC_METHOD, 90, 47, 156, 70, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Circle size", IDC_LBL_CIRCLE, 15, 66, 72, 9
-    EDITTEXT        IDC_CIRCLE, 90, 64, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT           "pixels", IDC_LBL_CIRCLE_UNIT, 126, 66, 60, 9
-    LTEXT           "Run when idle for", IDC_LBL_IDLE, 15, 82, 72, 9
-    EDITTEXT        IDC_IDLE, 90, 80, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT           "seconds", IDC_LBL_IDLE_UNIT, 126, 82, 60, 9
-    LTEXT           "Repeat every", IDC_LBL_INTERVAL, 15, 98, 72, 9
-    EDITTEXT        IDC_INTERVAL_MIN, 90, 96, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    CTEXT           "-", IDC_LBL_DASH, 123, 98, 10, 9
-    EDITTEXT        IDC_INTERVAL_MAX, 134, 96, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
-    LTEXT           "seconds", IDC_LBL_INT_UNIT, 170, 98, 60, 9
-    AUTOCHECKBOX    "Left click too", IDC_CLICK, 15, 114, 232, 10
+    LTEXT           "Method", IDC_LBL_METHOD, 15, 49, 92, 9
+    COMBOBOX        IDC_METHOD, 110, 47, 136, 70, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Circle size", IDC_LBL_CIRCLE, 15, 66, 92, 9
+    EDITTEXT        IDC_CIRCLE, 110, 64, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT           "pixels", IDC_LBL_CIRCLE_UNIT, 146, 66, 60, 9
+    LTEXT           "Start after being idle for", IDC_LBL_IDLE, 15, 82, 92, 9
+    EDITTEXT        IDC_IDLE, 110, 80, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT           "seconds", IDC_LBL_IDLE_UNIT, 146, 82, 60, 9
+    LTEXT           "Repeat every", IDC_LBL_INTERVAL, 15, 98, 92, 9
+    EDITTEXT        IDC_INTERVAL_MIN, 110, 96, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    CTEXT           "-", IDC_LBL_DASH, 143, 98, 10, 9
+    EDITTEXT        IDC_INTERVAL_MAX, 154, 96, 32, 12, ES_NUMBER | ES_AUTOHSCROLL
+    LTEXT           "seconds", IDC_LBL_INT_UNIT, 190, 98, 58, 9
+    AUTOCHECKBOX    "Also left-click", IDC_CLICK, 15, 114, 232, 10
 
     GROUPBOX        "Keep awake", IDC_GRP_AWAKE, 7, 134, 248, 40
     AUTOCHECKBOX    "Prevent sleep", IDC_PREVENT_SLEEP, 15, 146, 232, 10
@@ -116,10 +121,12 @@ BEGIN
     CTEXT           "and", IDC_LBL_AND, 146, 191, 20, 9
     EDITTEXT        IDC_SCHEDULE_TO, 168, 189, 30, 12, ES_AUTOHSCROLL
 
-    GROUPBOX        "Program", IDC_GRP_PROGRAM, 7, 210, 248, 54
+    GROUPBOX        "Program", IDC_GRP_PROGRAM, 7, 210, 248, 72
     AUTOCHECKBOX    "Start with Windows", IDC_AUTOSTART, 15, 222, 232, 10
     AUTOCHECKBOX    "Start minimized", IDC_START_MINIMIZED, 15, 235, 232, 10
     AUTOCHECKBOX    "Close to tray", IDC_CLOSE_TO_TRAY, 15, 248, 232, 10
+    LTEXT           "Language", IDC_LBL_LANGUAGE, 15, 265, 92, 9
+    COMBOBOX        IDC_LANGUAGE, 110, 263, 136, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    CTEXT           "", IDC_FOOTER, 7, 270, 248, 9, SS_NOPREFIX
+    CTEXT           "", IDC_FOOTER, 7, 288, 248, 9, SS_NOPREFIX
 END
