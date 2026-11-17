@@ -471,6 +471,7 @@ unsafe fn read_settings(window: HWND, previous: Settings) -> Settings {
         schedule_end_min: time(IDC_SCHEDULE_TO, previous.schedule_end_min),
         start_minimized: is_checked(window, IDC_START_MINIMIZED),
         close_to_tray: is_checked(window, IDC_CLOSE_TO_TRAY),
+        language: previous.language,
     }
     .normalized()
 }

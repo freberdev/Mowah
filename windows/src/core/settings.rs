@@ -22,6 +22,15 @@ pub enum Method {
     KeyF15,
 }
 
+/// Which language the window, the menu and the status are written in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LanguageChoice {
+    /// Swedish when Windows is in Swedish, otherwise English.
+    System,
+    Swedish,
+    English,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Settings {
     pub method: Method,
@@ -39,6 +48,7 @@ pub struct Settings {
     pub schedule_end_min: u16,
     pub start_minimized: bool,
     pub close_to_tray: bool,
+    pub language: LanguageChoice,
 }
 
 impl Default for Settings {
@@ -57,6 +67,7 @@ impl Default for Settings {
             schedule_end_min: DEFAULT_SCHEDULE_END,
             start_minimized: false,
             close_to_tray: true,
+            language: LanguageChoice::System,
         }
     }
 }
@@ -83,6 +94,11 @@ impl Settings {
             Method::VisibleMove => "visible_move",
             Method::KeyF15 => "key_f15",
         };
+        let language = match self.language {
+            LanguageChoice::System => "system",
+            LanguageChoice::Swedish => "sv",
+            LanguageChoice::English => "en",
+        };
         format!(
             "method={method}\r\n\
              circle_diameter_px={}\r\n\
@@ -96,7 +112,8 @@ impl Settings {
              schedule_start={}\r\n\
              schedule_end={}\r\n\
              start_minimized={}\r\n\
-             close_to_tray={}\r\n",
+             close_to_tray={}\r\n\
+             language={language}\r\n",
             self.circle_diameter_px,
             self.idle_threshold_secs,
             self.interval_min_secs,
@@ -132,6 +149,7 @@ impl Settings {
                 "schedule_end" => set(&mut s.schedule_end_min, parse_hhmm(value)),
                 "start_minimized" => set(&mut s.start_minimized, value.parse().ok()),
                 "close_to_tray" => set(&mut s.close_to_tray, value.parse().ok()),
+                "language" => set(&mut s.language, parse_language(value)),
                 _ => {}
             }
         }
@@ -168,6 +186,15 @@ fn parse_method(value: &str) -> Option<Method> {
         "nudge" => Some(Method::Nudge),
         "visible_move" => Some(Method::VisibleMove),
         "key_f15" => Some(Method::KeyF15),
+        _ => None,
+    }
+}
+
+fn parse_language(value: &str) -> Option<LanguageChoice> {
+    match value {
+        "system" => Some(LanguageChoice::System),
+        "sv" => Some(LanguageChoice::Swedish),
+        "en" => Some(LanguageChoice::English),
         _ => None,
     }
 }
@@ -219,6 +246,7 @@ mod tests {
             schedule_end_min: 16 * 60 + 15,
             start_minimized: true,
             close_to_tray: false,
+            language: LanguageChoice::English,
         };
         assert_eq!(Settings::from_ini(&s.to_ini()), s);
     }
@@ -229,6 +257,38 @@ mod tests {
             let s = Settings { method, ..Settings::default() };
             assert_eq!(Settings::from_ini(&s.to_ini()).method, method);
         }
+    }
+
+    #[test]
+    fn language_follows_the_system_by_default() {
+        assert_eq!(Settings::default().language, LanguageChoice::System);
+    }
+
+    #[test]
+    fn every_language_choice_survives_a_round_trip() {
+        for language in [LanguageChoice::System, LanguageChoice::Swedish, LanguageChoice::English] {
+            let s = Settings { language, ..Settings::default() };
+            assert_eq!(Settings::from_ini(&s.to_ini()).language, language);
+        }
+    }
+
+    #[test]
+    fn language_is_written_as_a_short_code() {
+        let ini = Settings { language: LanguageChoice::Swedish, ..Settings::default() }.to_ini();
+        assert!(ini.contains("language=sv\r\n"));
+    }
+
+    #[test]
+    fn settings_file_without_a_language_follows_the_system() {
+        let s = Settings::from_ini("method=key_f15\nleft_click=true\n");
+        assert_eq!(s.language, LanguageChoice::System);
+        assert_eq!(s.method, Method::KeyF15);
+        assert!(s.left_click);
+    }
+
+    #[test]
+    fn unknown_language_follows_the_system() {
+        assert_eq!(Settings::from_ini("language=klingon\n").language, LanguageChoice::System);
     }
 
     #[test]
