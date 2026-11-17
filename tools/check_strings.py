@@ -19,7 +19,9 @@ SOURCES = ROOT / "macos" / "Mowah"
 CATALOG = SOURCES / "Resources" / "Localizable.xcstrings"
 LANGUAGES = ("en", "sv")
 # Text keys are namespaced, which is what tells them apart from other strings in the code.
-PREFIXES = ("status", "duration", "lastAction", "menu", "permission", "group", "field", "method", "unit", "app")
+PREFIXES = (
+    "status", "duration", "lastAction", "menu", "permission", "group", "field", "method", "unit", "app", "language",
+)
 KEY = re.compile(r'"((?:%s)\.[A-Za-z]+)"' % "|".join(PREFIXES))
 PLACEHOLDER = re.compile(r"%(?:\d+\$)?(?:lld|@|d)")
 

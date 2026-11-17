@@ -20,8 +20,17 @@ final class AppModel {
             guard settings != oldValue else { return }
             runner.settings = settings
             store.save(settings)
+            // Compared with the texts in use, not with the old settings: after a
+            // correction the old settings are the uncorrected ones.
+            let language = AppModel.language(for: settings.language)
+            if language != texts.language {
+                texts = Texts(language)
+            }
         }
     }
+    /// The texts in the language that applies. The menu and the window take every
+    /// text from here, so they are redrawn when the language is changed.
+    private(set) var texts: Texts
     /// Shows what macOS says, which is not always what was asked for.
     var launchAtLogin: Bool {
         didSet {
@@ -47,6 +56,7 @@ final class AppModel {
         self.services = services
         self.runner = runner
         self.settings = settings
+        self.texts = Texts(AppModel.language(for: settings.language))
         self.launchAtLogin = LoginItem.isEnabled
         self.hasPermission = services.hasPermission
         self.snapshot = runner.tick()
@@ -68,6 +78,11 @@ final class AppModel {
         case .userActive, .keepingAlive: "MenuBarIcon"
         case .paused, .pausedUntil, .locked, .outsideSchedule: "MenuBarIconResting"
         }
+    }
+
+    /// Following the system goes by the language macOS picked for the app at start.
+    private static func language(for choice: LanguageChoice) -> AppLanguage {
+        resolveLanguage(choice, preferredLocalizations: Bundle.main.preferredLocalizations)
     }
 
     func showSettings() {

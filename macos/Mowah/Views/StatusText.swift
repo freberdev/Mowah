@@ -1,41 +1,41 @@
 import Foundation
 import MowahCore
 
-/// The main status line, in the user's language.
-func statusLine(_ snapshot: Snapshot) -> String {
+/// The main status line, in the chosen language.
+func statusLine(_ snapshot: Snapshot, _ texts: Texts) -> String {
     switch snapshot.status {
     case .userActive:
-        return String(localized: "status.ready")
+        return texts("status.ready")
     case .keepingAlive:
-        return formatted("status.keepingAlive", durationText(AwayDuration(ms: snapshot.userIdleMs)))
+        return texts.format("status.keepingAlive", durationText(AwayDuration(ms: snapshot.userIdleMs), texts))
     case .paused:
-        return String(localized: "status.paused")
+        return texts("status.paused")
     case .pausedUntil:
-        guard let end = snapshot.pauseEndMinute else { return String(localized: "status.paused") }
-        return formatted("status.pausedUntil", clockTime(minuteOfDay: end))
+        guard let end = snapshot.pauseEndMinute else { return texts("status.paused") }
+        return texts.format("status.pausedUntil", clockTime(minuteOfDay: end))
     case .outsideSchedule:
-        return String(localized: "status.outsideSchedule")
+        return texts("status.outsideSchedule")
     case .locked:
-        return String(localized: "status.locked")
+        return texts("status.locked")
     case .permissionMissing:
-        return String(localized: "status.permissionMissing")
+        return texts("status.permissionMissing")
     }
 }
 
 /// The line under the status: when Mowah last did something.
-func lastActionLine(_ snapshot: Snapshot) -> String {
-    guard let minute = snapshot.lastActionMinute else { return String(localized: "lastAction.none") }
-    return formatted("lastAction.at", clockTime(minuteOfDay: minute))
+func lastActionLine(_ snapshot: Snapshot, _ texts: Texts) -> String {
+    guard let minute = snapshot.lastActionMinute else { return texts("lastAction.none") }
+    return texts.format("lastAction.at", clockTime(minuteOfDay: minute))
 }
 
-private func durationText(_ duration: AwayDuration) -> String {
+private func durationText(_ duration: AwayDuration, _ texts: Texts) -> String {
     switch duration {
     case .seconds(let seconds):
-        return formatted("duration.seconds", seconds)
+        return texts.format("duration.seconds", seconds)
     case .minutes(let minutes):
-        return formatted("duration.minutes", minutes)
+        return texts.format("duration.minutes", minutes)
     case .hoursAndMinutes(let hours, let minutes):
-        return formatted("duration.hoursAndMinutes", hours, minutes)
+        return texts.format("duration.hoursAndMinutes", hours, minutes)
     }
 }
 
@@ -44,9 +44,4 @@ private func clockTime(minuteOfDay: Int) -> String {
     let midnight = Calendar.current.startOfDay(for: Date())
     let date = midnight.addingTimeInterval(TimeInterval(minuteOfDay * 60))
     return date.formatted(date: .omitted, time: .shortened)
-}
-
-/// Looks up a text with placeholders and fills them in.
-private func formatted(_ key: String.LocalizationValue, _ arguments: CVarArg...) -> String {
-    String(format: String(localized: key), locale: .current, arguments: arguments)
 }

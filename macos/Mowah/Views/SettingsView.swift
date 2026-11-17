@@ -5,61 +5,71 @@ struct SettingsView: View {
     @Bindable var model: AppModel
 
     var body: some View {
+        let texts = model.texts
         Form {
             if !model.hasPermission {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.yellow)
-                        Text("permission.explanation")
+                        Text(texts("permission.explanation"))
                         Spacer()
-                        Button("permission.open") { model.requestPermission() }
+                        Button(texts("permission.open")) { model.requestPermission() }
                     }
                 }
             }
 
-            Section("group.activity") {
-                Picker("field.method", selection: $model.settings.method) {
-                    Text("method.invisible").tag(Method.invisible)
-                    Text("method.visibleMove").tag(Method.visibleMove)
-                    Text("method.key").tag(Method.key)
+            Section(texts("group.activity")) {
+                Picker(texts("field.method"), selection: $model.settings.method) {
+                    Text(texts("method.invisible")).tag(Method.invisible)
+                    Text(texts("method.visibleMove")).tag(Method.visibleMove)
+                    Text(texts("method.key")).tag(Method.key)
                 }
-                LabeledContent("field.circleSize") {
+                LabeledContent(texts("field.circleSize")) {
                     NumberField(value: $model.settings.circleDiameter)
-                    Text("unit.pixels")
+                    Text(texts("unit.pixels"))
                 }
                 // The circle size only means something for the visible movement.
                 .disabled(model.settings.method != .visibleMove)
-                LabeledContent("field.idleFor") {
+                LabeledContent(texts("field.idleFor")) {
                     NumberField(value: $model.settings.idleThresholdSecs)
-                    Text("unit.seconds")
+                    Text(texts("unit.seconds"))
                 }
-                LabeledContent("field.repeatEvery") {
+                LabeledContent(texts("field.repeatEvery")) {
                     NumberField(value: $model.settings.intervalMinSecs)
                     Text(verbatim: "–")
                     NumberField(value: $model.settings.intervalMaxSecs)
-                    Text("unit.seconds")
+                    Text(texts("unit.seconds"))
                 }
-                Toggle("field.leftClick", isOn: $model.settings.leftClick)
+                Toggle(texts("field.leftClick"), isOn: $model.settings.leftClick)
             }
 
-            Section("group.awake") {
-                Toggle("field.preventSleep", isOn: $model.settings.preventSleep)
-                Toggle("field.keepDisplayOn", isOn: $model.settings.keepDisplayOn)
+            Section(texts("group.awake")) {
+                Toggle(texts("field.preventSleep"), isOn: $model.settings.preventSleep)
+                Toggle(texts("field.keepDisplayOn"), isOn: $model.settings.keepDisplayOn)
             }
 
-            Section {
+            Section(texts("group.schedule")) {
                 Toggle(isOn: $model.settings.scheduleEnabled) {
                     HStack {
-                        Text("field.schedule")
+                        Text(texts("field.schedule"))
                         TimeField(minuteOfDay: $model.settings.scheduleStartMinute)
-                        Text("field.scheduleAnd")
+                        Text(texts("field.scheduleAnd"))
                         TimeField(minuteOfDay: $model.settings.scheduleEndMinute)
                     }
                 }
-                Toggle("field.launchAtLogin", isOn: $model.launchAtLogin)
+            }
+
+            Section {
+                Toggle(texts("field.launchAtLogin"), isOn: $model.launchAtLogin)
+                Picker(texts("field.language"), selection: $model.settings.language) {
+                    Text(texts("language.system")).tag(LanguageChoice.system)
+                    // A language's own name is the same whatever language is in use.
+                    Text(verbatim: "Svenska").tag(LanguageChoice.swedish)
+                    Text(verbatim: "English").tag(LanguageChoice.english)
+                }
             } header: {
-                Text("group.scheduleAndStart")
+                Text(texts("group.general"))
             } footer: {
                 Text(footer)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -75,7 +85,7 @@ struct SettingsView: View {
         let info = Bundle.main.infoDictionary
         let version = info?["CFBundleShortVersionString"] as? String ?? ""
         let year = info?["MowahBuildYear"] as? String ?? ""
-        return String(format: String(localized: "app.footer"), version, year)
+        return model.texts.format("app.footer", version, year)
     }
 }
 

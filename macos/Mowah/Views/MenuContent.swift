@@ -6,23 +6,20 @@ struct MenuContent: View {
     let model: AppModel
 
     var body: some View {
-        Text(statusLine(model.snapshot))
-        Text(lastActionLine(model.snapshot))
+        let texts = model.texts
+        Text(statusLine(model.snapshot, texts))
+        Text(lastActionLine(model.snapshot, texts))
         Divider()
-        Button(pauseTitle) { model.togglePause() }
-        Button("menu.pauseForAnHour") { model.pauseForAnHour() }
+        Button(model.snapshot.isPaused ? texts("menu.resume") : texts("menu.pause")) { model.togglePause() }
+        Button(texts("menu.pauseForAnHour")) { model.pauseForAnHour() }
         if !model.hasPermission {
             Divider()
-            Button("menu.grantPermission") { model.requestPermission() }
+            Button(texts("menu.grantPermission")) { model.requestPermission() }
         }
         Divider()
-        Button("menu.settings") { model.showSettings() }
+        Button(texts("menu.settings")) { model.showSettings() }
             .keyboardShortcut(",")
-        Button("menu.quit") { NSApplication.shared.terminate(nil) }
+        Button(texts("menu.quit")) { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
-    }
-
-    private var pauseTitle: LocalizedStringKey {
-        model.snapshot.isPaused ? "menu.resume" : "menu.pause"
     }
 }
