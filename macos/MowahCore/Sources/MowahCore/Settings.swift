@@ -6,7 +6,7 @@ public enum Method: String, CaseIterable, Sendable {
     case invisible
     /// The pointer draws a circle.
     case visibleMove = "visible_move"
-    /// A press of F20, a key with no meaning of its own on a Mac.
+    /// A keyboard event that types nothing.
     case key
 }
 

@@ -449,13 +449,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The F20 key"
+            "value" : "Keyboard event"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tangenten F20"
+            "value" : "Tangentbordshändelse"
           }
         }
       }

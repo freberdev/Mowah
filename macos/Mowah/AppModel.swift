@@ -84,11 +84,15 @@ final class AppModel {
         tick()
     }
 
-    /// Shows the system's own question about Accessibility. That is also what
-    /// puts Mowah in the list under Privacy & Security, where the user turns it on.
+    /// Asks for the Accessibility permission. The system's own question is what
+    /// puts Mowah in the list under Privacy & Security, but macOS shows it only
+    /// once, so the list itself is opened as well.
     func requestPermission() {
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
+        if let list = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(list)
+        }
     }
 
     private func tick() {

@@ -12,7 +12,7 @@ Mowah håller Teams och liknande program "online" och hindrar datorn från att g
 | Språk | svenska | svenska och engelska, efter Macens språk |
 | Kod | `windows/`, Rust | `macos/`, Swift |
 
-Ingen av dem kräver installation.
+Ingen av dem har något installationsprogram.
 
 ## Så fungerar den
 
@@ -36,7 +36,7 @@ Metoderna:
 |---|---|---|
 | Osynlig | Pekaren flyttas en pixel och tillbaka. | En mushändelse på pekarens plats. Inget rör sig. |
 | Synlig musrörelse | Pekaren ritar en cirkel under en till två sekunder, och avbryts om du tar musen. | Samma. |
-| Tangent | F15, som inga vanliga tangentbord har. | F20. På Mac höjer F15 skärmens ljusstyrka. |
+| Tangent | F15, som inga vanliga tangentbord har. | En tangentbordshändelse som inte skriver något. En riktig tangent skulle hamna i programmet som ligger överst. |
 
 Tiderna går inte att sätta högre än 240 sekunder, eftersom Teams markerar dig som borta efter fem minuter.
 
@@ -60,6 +60,8 @@ Avmarkera "Starta med Windows" innan du tar bort programmet, så försvinner aut
 Klick och tangenttryck från Mowah når inte program som körs som administratör. Windows tillåter inte det för vanliga program.
 
 ## Mac
+
+Packa upp `Mowah-mac.zip` och flytta `Mowah.app` till mappen Program innan du startar den. En app som körs direkt ur Hämtade filer startas av macOS från en tillfällig plats, och då kan varken behörigheten eller starten vid inloggning hitta tillbaka till den.
 
 Mowah syns som en pekare i menyraden, utan ikon i Dock. Pekaren är tydlig när Mowah är aktiv, svagare när den är pausad eller vilar, och har en prick när den behöver din hjälp. Menyn visar statusen och har Pausa, Pausa i 1 timme, Inställningar och Avsluta.
 

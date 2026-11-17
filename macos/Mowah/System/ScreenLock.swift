@@ -1,34 +1,17 @@
 import CoreGraphics
 import Foundation
-import os
 
-/// Knows whether the screen is locked. macOS announces locking and unlocking
-/// but has no call to ask afterwards, so the state is kept here.
-final class ScreenLock {
-    private let locked: OSAllocatedUnfairLock<Bool>
-    private let observers: [NSObjectProtocol]
-
-    init() {
-        let session = CGSessionCopyCurrentDictionary() as? [String: Any]
-        let lockedNow = (session?["CGSSessionScreenIsLocked"] as? Bool) ?? false
-        let locked = OSAllocatedUnfairLock(initialState: lockedNow)
-        self.locked = locked
-
-        let center = DistributedNotificationCenter.default()
-        func observe(_ name: String, sets value: Bool) -> NSObjectProtocol {
-            center.addObserver(forName: Notification.Name(name), object: nil, queue: .main) { _ in
-                locked.withLock { $0 = value }
-            }
-        }
-        observers = [
-            observe("com.apple.screenIsLocked", sets: true),
-            observe("com.apple.screenIsUnlocked", sets: false),
-        ]
-    }
-
-    var isLocked: Bool { locked.withLock { $0 } }
-
-    deinit {
-        observers.forEach(DistributedNotificationCenter.default().removeObserver)
+/// Whether the screen is locked, asked from the login session each time.
+///
+/// macOS also announces locking and unlocking, but it holds such announcements
+/// back from an app that is not in front, and a menu bar app almost never is.
+enum ScreenLock {
+    static var isLocked: Bool {
+        guard let session = CGSessionCopyCurrentDictionary() as? [String: Any] else { return false }
+        // The key is only there while the screen is locked.
+        if (session["CGSSessionScreenIsLocked"] as? Bool) == true { return true }
+        // Another user has taken over the screen with fast user switching.
+        if (session["kCGSSessionOnConsoleKey"] as? Bool) == false { return true }
+        return false
     }
 }

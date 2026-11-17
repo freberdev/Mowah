@@ -6,7 +6,6 @@ import MowahCore
 /// The real macOS behind the runner.
 final class MacServices: SystemServices {
     private let power = PowerAssertions()
-    private let screenLock = ScreenLock()
     private let input = InputSender()
     private let timebase: mach_timebase_info_data_t = {
         var info = mach_timebase_info_data_t()
@@ -31,7 +30,7 @@ final class MacServices: SystemServices {
         return UInt64(max(0, seconds) * 1_000)
     }
 
-    var isLocked: Bool { screenLock.isLocked }
+    var isLocked: Bool { ScreenLock.isLocked }
 
     /// Read every tick: the user can give or remove the permission at any time.
     var hasPermission: Bool { AXIsProcessTrusted() }

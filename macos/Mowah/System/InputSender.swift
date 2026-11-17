@@ -5,9 +5,6 @@ import MowahCore
 /// Produces harmless input. Only called when the user has been away, and only
 /// works with the Accessibility permission; without it macOS drops the events.
 struct InputSender {
-    /// F20 has no meaning of its own on a Mac. F15, which the Windows app
-    /// presses, raises the display brightness here.
-    private static let f20: CGKeyCode = 90
     private static let stepPause: useconds_t = 16_000
 
     /// Performs one round of activity. Returns false if the user took over the mouse.
@@ -24,7 +21,7 @@ struct InputSender {
             // event afterwards is what actually resets the idle clocks.
             sendInvisibleEvent()
         case .key:
-            pressKey(InputSender.f20)
+            sendKeyboardEvent()
         }
         if settings.leftClick, !pointerIsOverOwnWindow() {
             click()
@@ -70,9 +67,16 @@ struct InputSender {
         CGAssociateMouseAndMouseCursorPosition(1)
     }
 
-    private func pressKey(_ key: CGKeyCode) {
-        CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: true)?.post(tap: .cghidEventTap)
-        CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: false)?.post(tap: .cghidEventTap)
+    /// A keyboard event that types nothing: it reports that no modifier key is
+    /// held. A real key would be delivered to whatever program is in front. The
+    /// function keys are no exception: a terminal turns F20 into characters on
+    /// the command line, and F15, which the Windows app presses, raises the
+    /// display brightness on a Mac.
+    private func sendKeyboardEvent() {
+        guard let event = CGEvent(source: nil) else { return }
+        event.type = .flagsChanged
+        event.flags = []
+        event.post(tap: .cghidEventTap)
     }
 
     private func click() {
