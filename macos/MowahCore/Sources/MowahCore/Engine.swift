@@ -58,6 +58,13 @@ public final class Engine {
     /// threshold before acting again.
     public static let ownInputWindowMs: UInt64 = 1_500
 
+    /// How much earlier than the action Mowah's own input may appear to be. The
+    /// time of the last input is worked out from two clock readings, each rounded
+    /// to whole milliseconds, so an event sent right after the tick can come out a
+    /// couple of milliseconds before it. Kept well under the idle clock's lag, so
+    /// real input from just before the action is still seen as the user's.
+    static let clockJitterMs: UInt64 = 50
+
     private enum Pause: Equatable {
         case none, manual, until(UInt64)
     }
@@ -128,7 +135,7 @@ public final class Engine {
     private func noteSystemInput(at inputMs: UInt64) {
         if let seen = lastInputSeenMs, inputMs <= seen { return }
         lastInputSeenMs = inputMs
-        if let own = ownAction, inputMs >= own.start, inputMs <= own.end + Engine.ownInputWindowMs { return }
+        if let own = ownAction, inputMs + Engine.clockJitterMs >= own.start, inputMs <= own.end + Engine.ownInputWindowMs { return }
         userLastActiveMs = inputMs
     }
 
