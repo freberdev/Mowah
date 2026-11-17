@@ -33,6 +33,7 @@ public struct Settings: Equatable, Sendable {
     /// Minutes since midnight.
     public var scheduleStartMinute = Settings.defaultScheduleStart
     public var scheduleEndMinute = Settings.defaultScheduleEnd
+    public var language: LanguageChoice = .system
 
     public init() {}
 

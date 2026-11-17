@@ -40,6 +40,7 @@ import Testing
             s.scheduleEnabled = true
             s.scheduleStartMinute = 7 * 60 + 30
             s.scheduleEndMinute = 16 * 60 + 15
+            s.language = .english
             SettingsStore(defaults: defaults).save(s)
             #expect(SettingsStore(defaults: defaults).load() == s)
         }
@@ -53,6 +54,52 @@ import Testing
                 SettingsStore(defaults: defaults).save(s)
                 #expect(SettingsStore(defaults: defaults).load().method == method)
             }
+        }
+    }
+
+    @Test func languageFollowsTheSystemUntilSomethingElseIsChosen() {
+        withDefaults { defaults in
+            #expect(SettingsStore(defaults: defaults).load().language == .system)
+        }
+    }
+
+    @Test func everyLanguageChoiceSurvivesARoundTrip() {
+        for language in LanguageChoice.allCases {
+            withDefaults { defaults in
+                var s = Settings()
+                s.language = language
+                SettingsStore(defaults: defaults).save(s)
+                #expect(SettingsStore(defaults: defaults).load().language == language)
+            }
+        }
+    }
+
+    @Test func languageIsStoredAsAShortCode() {
+        withDefaults { defaults in
+            var s = Settings()
+            s.language = .swedish
+            SettingsStore(defaults: defaults).save(s)
+            #expect(defaults.string(forKey: "language") == "sv")
+        }
+    }
+
+    @Test func unreadableStoredLanguageFollowsTheSystem() {
+        withDefaults { defaults in
+            defaults.set("klingon", forKey: "language")
+            #expect(SettingsStore(defaults: defaults).load().language == .system)
+            defaults.set(42, forKey: "language")
+            #expect(SettingsStore(defaults: defaults).load().language == .system)
+        }
+    }
+
+    @Test func settingsSavedBeforeTheLanguageChoiceExistedKeepTheirValues() {
+        withDefaults { defaults in
+            defaults.set("key", forKey: "method")
+            defaults.set(true, forKey: "left_click")
+            let s = SettingsStore(defaults: defaults).load()
+            #expect(s.language == .system)
+            #expect(s.method == .key)
+            #expect(s.leftClick)
         }
     }
 

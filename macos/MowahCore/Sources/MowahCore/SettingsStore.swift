@@ -15,6 +15,7 @@ public struct SettingsStore {
         static let scheduleEnabled = "schedule_enabled"
         static let scheduleStart = "schedule_start"
         static let scheduleEnd = "schedule_end"
+        static let language = "language"
     }
 
     private let defaults: UserDefaults
@@ -49,6 +50,9 @@ public struct SettingsStore {
         s.scheduleEnabled = bool(Key.scheduleEnabled) ?? s.scheduleEnabled
         s.scheduleStartMinute = time(Key.scheduleStart) ?? s.scheduleStartMinute
         s.scheduleEndMinute = time(Key.scheduleEnd) ?? s.scheduleEndMinute
+        if let raw = defaults.object(forKey: Key.language) as? String, let language = LanguageChoice(rawValue: raw) {
+            s.language = language
+        }
         return s.normalized()
     }
 
@@ -64,5 +68,6 @@ public struct SettingsStore {
         defaults.set(settings.scheduleEnabled, forKey: Key.scheduleEnabled)
         defaults.set(formatTime(settings.scheduleStartMinute), forKey: Key.scheduleStart)
         defaults.set(formatTime(settings.scheduleEndMinute), forKey: Key.scheduleEnd)
+        defaults.set(settings.language.rawValue, forKey: Key.language)
     }
 }
