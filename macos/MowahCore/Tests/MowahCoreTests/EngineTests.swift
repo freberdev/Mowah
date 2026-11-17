@@ -339,25 +339,26 @@ private var scheduled: Settings {
         #expect(outcome.userIdleMs == 60_750)
     }
 
-    @Test func ownInputStampedAFewMillisecondsBeforeTheActionIsStillItsOwn() {
-        // The time of the last input is worked out from two readings rounded to
-        // whole milliseconds, so Mowah's own event can appear to be slightly
-        // earlier than the tick that sent it. Seen on a Mac on 2026-11-17.
-        let sim = Sim(fixedInterval(30))
-        sim.runSecs(60)
-        sim.lastInputMs = sim.nowMs - 2
-        let outcome = sim.runSecs(10)
-        #expect(outcome.status == .keepingAlive)
-        #expect(outcome.userIdleMs == 70_000)
-        #expect(sim.actionTimes.count == 1)
+    @Test func ownInputStampedHalfASecondBeforeTheActionIsStillItsOwn() {
+        // The idle clock on a Mac is coarse: measured on 2026-11-17, it placed a
+        // sent event anywhere from 6 to 470 ms before the moment it was sent.
+        for early in [UInt64(2), 44, 231, 279, 470] {
+            let sim = Sim(fixedInterval(30))
+            sim.runSecs(60)
+            sim.lastInputMs = sim.nowMs - early
+            let outcome = sim.runSecs(10)
+            #expect(outcome.status == .keepingAlive, "stamped \(early) ms early")
+            #expect(outcome.userIdleMs == 70_000, "stamped \(early) ms early")
+            #expect(sim.actionTimes.count == 1, "stamped \(early) ms early")
+        }
     }
 
     @Test func inputClearlyBeforeTheActionIsTheUser() {
-        // The idle clock lags, so real input from just before the action can show up
-        // only afterwards. A third of a second is too early to be Mowah's own.
+        // Real input from a full second before the action is too early to be
+        // Mowah's own, however coarse the clock.
         let sim = Sim(fixedInterval(200))
         sim.runSecs(60)
-        sim.lastInputMs = sim.nowMs - 300
+        sim.lastInputMs = sim.nowMs - 1_000
         #expect(sim.runSecs(1).status == .userActive)
     }
 
