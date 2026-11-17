@@ -13,5 +13,5 @@ fn main() {
 
 #[cfg(not(windows))]
 fn main() {
-    eprintln!("Mowah körs bara på Windows. Bygg med --target x86_64-pc-windows-gnu.");
+    eprintln!("Mowah only runs on Windows. Build with --target x86_64-pc-windows-gnu.");
 }

@@ -1,95 +1,98 @@
 # Mowah
 
-Mowah håller Teams och liknande program "online" och hindrar datorn från att gå i viloläge eller låsa sig, utan att störa när du sitter och arbetar. Den finns för Windows och för Mac.
+Mowah keeps Teams and similar programs "online" and stops the computer from going to sleep or locking, without getting in the way while you work. It runs on Windows and on the Mac.
 
-![Mowahs ikoner](windows/res/icon-preview.png)
+![Mowah's icons](windows/res/icon-preview.png)
 
 | | Windows | Mac |
 |---|---|---|
-| Fil | `Mowah.exe`, ungefär 400 kB | `Mowah.app`, i `Mowah.dmg` |
-| Kräver | Windows 10 eller 11 | macOS 14 eller nyare, Apple-processor eller Intel |
-| Ligger i | systemfältet | menyraden |
-| Språk | svenska | svenska och engelska, efter Macens språk |
-| Kod | `windows/`, Rust | `macos/`, Swift |
+| File | `Mowah.exe`, about 400 kB | `Mowah.app`, in `Mowah.dmg` |
+| Requires | Windows 10 or 11 | macOS 14 or later, Apple silicon or Intel |
+| Lives in | the system tray | the menu bar |
+| Languages | Swedish and English | Swedish and English |
+| Code | `windows/`, Rust | `macos/`, Swift |
 
-Ingen av dem har något installationsprogram.
+Neither of them has an installer.
 
-## Så fungerar den
+## How it works
 
-Mowah gör ingenting så länge du själv rör mus eller tangentbord. Först när du har varit inaktiv en stund (60 sekunder som standard) skapar den lite aktivitet, och upprepar det med slumpat mellanrum tills du är tillbaka.
+Mowah does nothing as long as you use the mouse or the keyboard yourself. Only when you have been idle for a while (60 seconds by default) does it create a little activity, and it repeats that at random intervals until you are back.
 
-| Inställning | Vad den gör |
+| Setting | What it does |
 |---|---|
-| Metod | Hur aktiviteten skapas, se nedan. |
-| Cirkelns storlek | Hur stor cirkel den synliga musrörelsen ritar, 20–1000 pixlar (300 som standard). Måttet skalas med skärmens upplösning. Fältet är bara aktivt för den synliga musrörelsen. |
-| Kör när inaktiv i | Hur länge du ska ha varit borta innan Mowah börjar (5–240 sekunder). |
-| Upprepa var | Kortaste och längsta tid mellan åtgärderna (5–240 sekunder). Tiden slumpas inom intervallet. |
-| Vänsterklicka också | Klickar där pekaren står efter varje åtgärd. Avstängt från start, eftersom ett klick kan träffa något du inte tänkt. |
-| Förhindra viloläge | Ber systemet att inte försätta datorn i viloläge. |
-| Förhindra att skärmen släcks | Ber systemet att hålla skärmen tänd. |
-| Bara mån–fre mellan | Mowah vilar utanför de här tiderna, så att du blir "borta" och datorn får sova efter arbetstid. |
-| Starta med Windows / Starta vid inloggning | Startar Mowah när du loggar in. |
+| Method | How the activity is created, see below. |
+| Circle size | How large a circle the visible pointer movement draws, 20–1000 pixels (300 by default). The size is scaled with the display's resolution. The field is only active for the visible pointer movement. |
+| Start after being idle for | How long you must have been away before Mowah starts (5–240 seconds). |
+| Repeat every | The shortest and longest time between actions (5–240 seconds). The time is picked at random within the interval. |
+| Also left-click | Clicks where the pointer is after every action. Off by default, since a click can hit something you did not intend. |
+| Prevent sleep | Asks the system not to put the computer to sleep. |
+| Keep the display on | Asks the system to keep the display lit. |
+| Only Mon–Fri between | Mowah rests outside these hours, so that you go "away" and the computer may sleep after work. |
+| Start with Windows / Open at login | Starts Mowah when you log in. |
+| Language | Follow system, Svenska or English. Following the system gives Swedish when the operating system is in Swedish and English otherwise. A change shows at once. |
 
-Metoderna:
+The methods:
 
-| Metod | Windows | Mac |
+| Method | Windows | Mac |
 |---|---|---|
-| Osynlig | Pekaren flyttas en pixel och tillbaka. | En mushändelse på pekarens plats. Inget rör sig. |
-| Synlig musrörelse | Pekaren ritar en cirkel under en till två sekunder, och avbryts om du tar musen. | Samma. |
-| Tangent | F15, som inga vanliga tangentbord har. | En tangentbordshändelse som inte skriver något. En riktig tangent skulle hamna i programmet som ligger överst. |
+| Invisible | The pointer moves one pixel and back. | A mouse event at the pointer's own position. Nothing moves. |
+| Visible pointer movement | The pointer draws a circle for one to two seconds, and stops if you take the mouse. | The same. |
+| Key | F15, a key no ordinary keyboard has. | A keyboard event that types nothing. A real key would end up in whichever program is in front. |
 
-Tiderna går inte att sätta högre än 240 sekunder, eftersom Teams markerar dig som borta efter fem minuter.
+The times cannot be set higher than 240 seconds, because Teams marks you as away after five minutes.
 
-Mowah vilar också när datorn är låst. Viloläge förhindras fortfarande då, men skärmen får släckas.
+Mowah also rests while the computer is locked. Sleep is still prevented then, but the display may turn off.
 
-Windows-versionen har två inställningar till: "Starta minimerad i systemfältet" och "Stäng-knappen minimerar till systemfältet". Mac-versionen har inget huvudfönster och behöver dem inte.
+The Windows version has two more settings: "Start minimized in the system tray" and "The close button minimizes to the system tray". The Mac version has no main window and does not need them.
 
 ## Windows
 
-Ikonen i systemfältet är färgad när Mowah är aktiv och grå när den är pausad eller vilar. Vänsterklick öppnar fönstret. Högerklick ger en meny med Öppna, Pausa, Pausa i 1 timme och Avsluta.
+The icon in the system tray is in colour when Mowah is active and grey when it is paused or resting. A left click opens the window. A right click gives a menu with Open Mowah, Pause, Pause for 1 hour and Exit.
 
-Windows 11 gömmer nya ikoner bakom pilen i systemfältet. Dra ut Mowah-ikonen därifrån om du vill se den hela tiden.
+Windows 11 hides new icons behind the arrow in the system tray. Drag the Mowah icon out from there if you want to see it all the time.
 
-Det körs bara en Mowah åt gången. Startar du programmet igen lyfts det befintliga fönstret fram.
+Only one Mowah runs at a time. If you start the program again, the window that is already there comes to the front.
 
-- Inställningar: `%APPDATA%\Mowah\settings.ini`
-- Autostart: värdet `Mowah` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`
+- Settings: `%APPDATA%\Mowah\settings.ini`
+- Autostart: the value `Mowah` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`
 
-Avmarkera "Starta med Windows" innan du tar bort programmet, så försvinner autostarten. Mappen `%APPDATA%\Mowah` kan du sedan radera för hand.
+Clear "Start with Windows" before you remove the program, and the autostart entry goes away. The folder `%APPDATA%\Mowah` can then be deleted by hand.
 
-Klick och tangenttryck från Mowah når inte program som körs som administratör. Windows tillåter inte det för vanliga program.
+Clicks and key presses from Mowah do not reach programs that run as administrator. Windows does not allow that for ordinary programs.
 
 ## Mac
 
-Öppna `Mowah.dmg` och dra `Mowah.app` till mappen Program innan du startar den. En app som körs direkt ur skivavbilden eller ur Hämtade filer startas av macOS från en tillfällig plats, och då kan varken behörigheten eller starten vid inloggning hitta tillbaka till den.
+Open `Mowah.dmg` and drag `Mowah.app` to the Applications folder before you start it. An app that is run straight from the disk image or from Downloads is started by macOS from a temporary place, and then neither the permission nor opening at login can find its way back to it.
 
-Mowah syns som en pekare i menyraden, utan ikon i Dock. Pekaren är tydlig när Mowah är aktiv, svagare när den är pausad eller vilar, och har en prick när den behöver din hjälp. Menyn visar statusen och har Pausa, Pausa i 1 timme, Inställningar och Avsluta.
+Mowah shows as a pointer in the menu bar, with no icon in the Dock. The pointer is distinct when Mowah is active, fainter when it is paused or resting, and has a dot when it needs your help. The menu shows the status and has Pause, Pause for 1 hour, Settings and Quit Mowah.
 
-**Behörigheten Hjälpmedel krävs.** macOS låter inget program skapa mus- eller tangentaktivitet utan den. Första gången öppnas inställningsfönstret med en knapp som visar systemets fråga. Slå sedan på Mowah under Integritet och säkerhet › Hjälpmedel i Systeminställningar. Utan behörigheten kan Mowah hålla Macen vaken, men inte hålla dig "online".
+**The Accessibility permission is required.** macOS lets no program create mouse or keyboard activity without it. The first time, the settings window opens with a button that brings up the system's question. Then turn Mowah on under Privacy & Security › Accessibility in System Settings. Without the permission Mowah can keep the Mac awake, but not keep you "online".
 
-- Inställningar: appens egna inställningar hos macOS, `com.freberdev.mowah`
-- Start vid inloggning: syns under Allmänt › Inloggningsobjekt i Systeminställningar
+- Settings: the app's own preferences in macOS, `com.freberdev.mowah`
+- Opening at login: shown under General › Login Items in System Settings
 
-## Bygga
+The language list changes Mowah's own texts. The system's own dialogs, such as the question about the Accessibility permission, always follow the language of the Mac.
 
-Windows-appen, på macOS eller Linux med `rustup` och `mingw-w64` installerade:
+## Building
+
+The Windows app, on macOS or Linux with `rustup` and `mingw-w64` installed:
 
 ```bash
 rustup target add x86_64-pc-windows-gnu
 windows/build.sh
 ```
 
-Resultatet hamnar i `dist/Mowah.exe`. På Windows går det också att köra `cargo build --release` i mappen `windows`.
+The result ends up in `dist/Mowah.exe`. On Windows you can also run `cargo build --release` in the `windows` folder.
 
-Mac-appen, på en Mac med Xcode och XcodeGen:
+The Mac app, on a Mac with Xcode and XcodeGen:
 
 ```bash
 macos/build.sh
 ```
 
-Resultatet hamnar i `dist/Mowah.dmg`. Xcode-projektet skapas från `macos/project.yml` och ligger inte i git.
+The result ends up in `dist/Mowah.dmg`. The Xcode project is generated from `macos/project.yml` and is not kept in git.
 
-Tester av logiken, det vill säga när Mowah ska agera, inställningarna och schemat:
+Tests of the logic, that is, when Mowah should act, the settings, the schedule and the texts:
 
 ```bash
 cd windows && cargo test
@@ -99,63 +102,65 @@ cd windows && cargo test
 cd macos/MowahCore && swift test
 ```
 
-Att alla Mac-appens texter finns på båda språken kontrolleras med:
+That every text in the Mac app exists in both languages is checked with:
 
 ```bash
 python3 tools/check_strings.py
 ```
 
-Ikonerna ritas av `tools/make_icons.py` (kräver Pillow), för båda apparna.
+In the Windows app the two languages are two sets of texts with the same fields, so a text that is missing in one of them does not compile.
 
-## Släppa en ny version
+The icons are drawn by `tools/make_icons.py` (requires Pillow), for both apps.
 
-Releaserna byggs på en Mac och laddas upp med `gh`. Macen behöver Developer ID-certifikatet och uppgifterna för notarisering i nyckelringen.
+## Releasing a new version
 
-Ändra först versionsnumret i `windows/Cargo.toml` (`version = "1.1.1"`) och kör `cargo build` där en gång så att `Cargo.lock` följer med. Båda apparna hämtar versionen därifrån. Committa och pusha till `main`.
+Releases are built on a Mac and uploaded with `gh`. The Mac needs the Developer ID certificate and the notarisation credentials in its keychain.
 
-Bygg sedan båda filerna och ladda upp dem:
+First change the version number in `windows/Cargo.toml` (`version = "1.2.1"`) and run `cargo build` there once so that `Cargo.lock` follows. Both apps take their version from there. Commit and push to `main`.
+
+Then build both files and upload them:
 
 ```bash
 windows/build.sh
 ```
 
 ```bash
-MOWAH_SIGN_IDENTITY="Developer ID Application: Namn (TEAMID)" macos/release.sh
+MOWAH_SIGN_IDENTITY="Developer ID Application: Name (TEAMID)" macos/release.sh
 ```
 
 ```bash
-tools/check_version_tag.sh v1.1.1
+tools/check_version_tag.sh v1.2.1
 ```
 
 ```bash
-gh release create v1.1.1 dist/Mowah.exe dist/Mowah.dmg --target main --title "Mowah v1.1.1" --generate-notes
+gh release create v1.2.1 dist/Mowah.exe dist/Mowah.dmg --target main --title "Mowah v1.2.1" --generate-notes
 ```
 
-`macos/release.sh` signerar appen och skivavbilden, skickar dem till Apple för godkännande och fäster godkännandet vid båda. `tools/check_version_tag.sh` säger till om taggen inte är versionen i `windows/Cargo.toml` med ett `v` framför. `gh release create` skapar taggen och releasen i ett steg.
+`macos/release.sh` signs the app and the disk image, sends them to Apple for approval and staples the approval to both. `tools/check_version_tag.sh` says so if the tag is not the version in `windows/Cargo.toml` with a `v` in front. `gh release create` creates the tag and the release in one step.
 
-## Signering
+## Signing
 
-Mac-appen kan signeras med ett Developer ID. Windows-appen är inte signerad med något utgivarcertifikat.
+The Mac app can be signed with a Developer ID. The Windows app is not signed with any publisher certificate.
 
-**Windows.** Mowah begär inga administratörsrättigheter, installerar inga tangentbords- eller mushookar, och innehåller ingen packad eller dold kod. Laddas filen ner från nätet kan Windows SmartScreen ändå varna för "okänd utgivare". En fil du byggt själv eller kopierat över direkt får normalt inte den varningen. På en arbetsdator med låst programpolicy kan osignerade program vara blockerade oavsett.
+**Windows.** Mowah asks for no administrator rights, installs no keyboard or mouse hooks, and contains no packed or hidden code. If the file is downloaded from the internet, Windows SmartScreen may still warn about an "unknown publisher". A file you have built yourself or copied over directly does not normally get that warning. On a work computer with a locked-down application policy, unsigned programs may be blocked regardless.
 
-**Mac.** En app som är byggd med `macos/release.sh` är signerad med ett Developer ID och godkänd av Apple, och öppnas utan varning. En app som är byggd med `macos/build.sh` utan certifikat är bara signerad för att kunna köras lokalt. Det betyder:
+**Mac.** An app built with `macos/release.sh` is signed with a Developer ID and approved by Apple, and opens without a warning. An app built with `macos/build.sh` without a certificate is only signed to run locally. That means:
 
-- En nedladdad app stoppas första gången. Godkänn den under Integritet och säkerhet i Systeminställningar.
-- Behörigheten Hjälpmedel hör till den exakta filen. Efter en ny version kan den behöva tas bort ur listan och ges på nytt.
+- A downloaded app is stopped the first time. Approve it under Privacy & Security in System Settings.
+- The Accessibility permission belongs to the exact file. After a new version it may have to be removed from the list and given again.
 
-`macos/build.sh` signerar med den identitet som står i miljövariabeln `MOWAH_SIGN_IDENTITY`.
+`macos/build.sh` signs with the identity in the environment variable `MOWAH_SIGN_IDENTITY`.
 
-Den som bygger själv kan slippa den andra punkten genom att skriva namnet på sitt eget utvecklarcertifikat på första raden i filen `macos/signing-identity.local`, som inte ligger i git. macOS känner då igen appen på certifikatet i stället för på den exakta filen, och behörigheten ligger kvar mellan byggen. En sådan app är till för den egna Macen och ska inte delas ut.
+If you build the app yourself, you can avoid the second point by writing the name of your own development certificate on the first line of the file `macos/signing-identity.local`, which is not kept in git. macOS then recognises the app by the certificate instead of by the exact file, and the permission stays between builds. Such an app is meant for your own Mac and should not be handed out.
 
-## Kodens upplägg
+## How the code is laid out
 
-- `windows/src/core/` och `macos/MowahCore/` – logiken utan systemanrop: motorn som avgör när något ska göras, inställningar och schema. Det är samma logik i två språk, och allt här har tester.
-- `windows/src/win/` – fönstret, systemfältsikonen, timern och anropen till Windows.
-- `windows/res/` – ikoner, manifest och fönstrets layout (`mowah.rc`).
-- `macos/Mowah/` – menyraden, inställningsfönstret och anropen till macOS. Texterna ligger i `Resources/Localizable.xcstrings`.
-- `tools/` – skripten för ikoner, texter och versionskontroll.
+- `windows/src/core/` and `macos/MowahCore/` – the logic, with no system calls: the engine that decides when something should be done, the settings, the schedule and the choice of language. It is the same logic in two languages, and everything here has tests.
+- `windows/src/win/` – the window, the tray icon, the timer and the calls to Windows.
+- `windows/res/` – icons, the manifest and the layout of the window (`mowah.rc`).
+- `macos/Mowah/` – the menu bar, the settings window and the calls to macOS. The texts are in `Resources/Localizable.xcstrings`.
+- `tools/` – the scripts for icons, texts and the version check.
 
-## Licens
+## License
 
-Mowah har MIT-licens. Hela texten står i [LICENSE](LICENSE).
+Mowah is released under the MIT license. The full text is in [LICENSE](LICENSE).
