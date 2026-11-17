@@ -5,6 +5,9 @@
 /macos/build/
 /macos/*.xcodeproj
 /macos/Mowah/Info.plist
+
+# A developer's own choice of signing certificate for local builds
+/macos/signing-identity.local
 .build/
 .swiftpm/
 xcuserdata/

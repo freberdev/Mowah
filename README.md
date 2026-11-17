@@ -138,6 +138,8 @@ Ingen av apparna är signerad med ett utgivarcertifikat ännu.
 
 `macos/build.sh` signerar med den identitet som står i miljövariabeln `MOWAH_SIGN_IDENTITY`. Med ett Developer ID och Apples godkännande försvinner båda punkterna.
 
+Den som bygger själv kan slippa den andra punkten genom att skriva namnet på sitt eget utvecklarcertifikat på första raden i filen `macos/signing-identity.local`, som inte ligger i git. macOS känner då igen appen på certifikatet i stället för på den exakta filen, och behörigheten ligger kvar mellan byggen. En sådan app är till för den egna Macen och ska inte delas ut.
+
 ## Kodens upplägg
 
 - `windows/src/core/` och `macos/MowahCore/` – logiken utan systemanrop: motorn som avgör när något ska göras, inställningar och schema. Det är samma logik i två språk, och allt här har tester.

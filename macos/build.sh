@@ -8,9 +8,17 @@ cd "$(dirname "$0")"
 # One version for both apps; it lives in the Windows project's Cargo.toml.
 version="$(sed -n 's/^version = "\(.*\)"$/\1/p' ../windows/Cargo.toml | head -n 1)"
 year="$(date +%Y)"
-# "-" signs the app to run locally. Set MOWAH_SIGN_IDENTITY to a Developer ID
-# identity to sign it for distribution.
-identity="${MOWAH_SIGN_IDENTITY:--}"
+# Which certificate signs the app, in this order:
+#   1. the environment variable MOWAH_SIGN_IDENTITY, for a release build;
+#   2. the first line of signing-identity.local next to this script, for builds
+#      on a developer's own Mac. The file is not kept in git;
+#   3. "-", which signs the app to run locally only. macOS then treats every
+#      build as a new app and asks for the Accessibility permission again.
+identity="${MOWAH_SIGN_IDENTITY:-}"
+if [ -z "$identity" ] && [ -f signing-identity.local ]; then
+    identity="$(head -n 1 signing-identity.local)"
+fi
+identity="${identity:--}"
 
 xcodegen generate --quiet
 xcodebuild -project Mowah.xcodeproj -scheme Mowah -configuration Release \
