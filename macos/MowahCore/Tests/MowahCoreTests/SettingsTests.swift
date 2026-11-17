@@ -86,6 +86,19 @@ import Testing
         #expect(formatTime(1439) == "23:59")
     }
 
+    @Test func parsesWholeNumbersAsTyped() {
+        #expect(parseWholeNumber("60") == 60)
+        #expect(parseWholeNumber(" 300 ") == 300)
+        #expect(parseWholeNumber("007") == 7)
+        #expect(parseWholeNumber("0") == 0)
+    }
+
+    @Test func rejectsEverythingThatIsNotAWholeNumber() {
+        for bad in ["", " ", "abc", "8,5", "8.5", "-5", "+5", "1 000", "12a", "٣٠", "1e3", "99999999999999999999"] {
+            #expect(parseWholeNumber(bad) == nil, "\(bad) should be rejected")
+        }
+    }
+
     @Test func a300PixelCircleMovesAboutFifteenPixelsPerStep() {
         #expect(circleSteps(diameter: 300) == 63)
     }

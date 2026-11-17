@@ -60,6 +60,15 @@ extension Comparable {
     }
 }
 
+/// Reads a number field: ASCII digits only, with surrounding spaces allowed.
+/// Signs, decimals, group separators and other scripts' digits are not a whole
+/// number here, so the field keeps its previous value instead of guessing.
+public func parseWholeNumber(_ text: String) -> Int? {
+    let trimmed = text.trimmingCharacters(in: .whitespaces)
+    guard !trimmed.isEmpty, trimmed.count <= 9, trimmed.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
+    return Int(trimmed)
+}
+
 /// Parses "8:05", "08:05" or "08.05" into minutes since midnight.
 public func parseTime(_ text: String) -> Int? {
     let trimmed = text.trimmingCharacters(in: .whitespaces)

@@ -8,12 +8,26 @@ import Observation
 final class AppModel {
     private(set) var snapshot: Snapshot
     private(set) var hasPermission: Bool
-    /// Stored and handed to the runner whenever it changes.
+    /// Stored and handed to the runner whenever it changes. Values outside
+    /// their limits are corrected first, so the window always shows what applies.
     var settings: Settings {
         didSet {
+            let corrected = settings.normalized()
+            guard corrected == settings else {
+                settings = corrected
+                return
+            }
             guard settings != oldValue else { return }
             runner.settings = settings
             store.save(settings)
+        }
+    }
+    /// Shows what macOS says, which is not always what was asked for.
+    var launchAtLogin: Bool {
+        didSet {
+            guard launchAtLogin != oldValue else { return }
+            let actual = LoginItem.setEnabled(launchAtLogin)
+            if actual != launchAtLogin { launchAtLogin = actual }
         }
     }
 
@@ -21,9 +35,11 @@ final class AppModel {
     @ObservationIgnored private let services: MacServices
     @ObservationIgnored private let runner: Runner
     @ObservationIgnored private var timer: Timer?
+    @ObservationIgnored private let settingsWindow = SettingsWindow()
 
     init() {
         let store = SettingsStore(defaults: .standard)
+        let isFirstRun = store.isFirstRun
         let settings = store.load()
         let services = MacServices()
         let runner = Runner(engine: Engine(), services: services, settings: settings)
@@ -31,9 +47,21 @@ final class AppModel {
         self.services = services
         self.runner = runner
         self.settings = settings
+        self.launchAtLogin = LoginItem.isEnabled
         self.hasPermission = services.hasPermission
         self.snapshot = runner.tick()
         startTimer()
+
+        if isFirstRun {
+            store.save(settings)
+            // The very first start opens the window, so the permission is seen at
+            // once. It has to wait until the app has finished launching.
+            DispatchQueue.main.async { [weak self] in self?.showSettings() }
+        }
+    }
+
+    func showSettings() {
+        settingsWindow.show(model: self)
     }
 
     func togglePause() {

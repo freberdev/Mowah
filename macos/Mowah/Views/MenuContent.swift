@@ -16,6 +16,8 @@ struct MenuContent: View {
             Button("menu.grantPermission") { model.requestPermission() }
         }
         Divider()
+        Button("menu.settings") { model.showSettings() }
+            .keyboardShortcut(",")
         Button("menu.quit") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
     }
